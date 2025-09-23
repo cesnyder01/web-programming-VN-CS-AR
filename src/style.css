@@ -5,7 +5,31 @@
     --rose:  #CE6D8B;
     --sand:  #DDC9B4;
   
-    --text:  #2a1e1e;
-    --muted: #5b4b4b;
-  }
-  
+    --bg: #f5f5f5;
+    --border: #ccc;
+    --text: #222;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+h1, h2 { margin-top: 0; }
+
+.box {
+  border: 2px dashed var(--border);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+}
