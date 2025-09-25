@@ -14,22 +14,112 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
+  font-family: 'Abhaya Libre', serif;
+  background: #ffffff;      /* pure white background */
   color: var(--text);
 }
 
 .wrapper {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 0 1rem;
 }
 
-h1, h2 { margin-top: 0; }
+/* ---------- Header ---------- */
+.site-header {
+  background: var(--cream);
+  border-bottom: 1px solid #ddd;
+}
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+.brand {
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: var(--wine);
+  text-decoration: none;
+}
+.nav-links a {
+  margin-left: 1rem;
+  font-weight: 600;
+  color: var(--wine);
+  text-decoration: none;
+}
 
-.box {
-  border: 2px dashed var(--border);
-  padding: 1rem;
+/* ---------- Buttons ---------- */
+.btn-primary,
+.btn-outline {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* Solid wine-colored button */
+.btn-primary {
+  background: var(--wine);
+  color: #fff;
+  border: none;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Outline button */
+.btn-outline {
+  border: 2px solid var(--wine);
+  color: var(--wine);
+}
+.btn-outline:hover {
+  background: var(--wine);
+  color: #fff;
+}
+
+/* ---------- Hero Section ---------- */
+.hero {
+  text-align: center;
+  padding: 4rem 0 2rem;
+}
+.hero-title {
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--wine);
   margin-bottom: 1rem;
-  background: white;
+}
+.hero-subtitle {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #444;
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ---------- Features Grid ---------- */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+.feature-card {
+  border: 1px solid var(--wine);
+  border-radius: 6px;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--cream);
+}
+.feature-card h2 {
+  font-weight: 800;
+  color: var(--wine);
+  margin-top: 0;
+}
+.feature-card p {
+  color: #555;
 }

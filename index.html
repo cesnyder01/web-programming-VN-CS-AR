@@ -1,19 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Landing</title>
-  <link rel="stylesheet" href="src/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home | RONR Platform</title>
+
+  <!-- Abhaya Libre ExtraBold -->
+  <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="src/style.css" />
 </head>
 <body>
-  <div class="wrapper">
-    <h1>RONR Platform</h1>
-    <div class="box">
-      <p>Intro text about the platform.</p>
-      <a href="login.html">Login</a> |
-      <a href="register.html">Register</a>
+  <header class="site-header">
+    <div class="wrapper header-row">
+      <a class="brand" href="index.html">RONR Platform</a>
+      <nav class="nav-links">
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+      </nav>
     </div>
-  </div>
+  </header>
+
+  <main class="wrapper">
+    <section class="hero">
+      <h1 class="hero-title">Bring Robert’s Rules Online</h1>
+      <p class="hero-subtitle">
+        Create committees, raise motions, and hold structured asynchronous discussions.
+      </p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn-outline">Get Started</a>
+        <a href="login.html" class="btn-outline">Login</a>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature-card">
+        <h2>Create Committees</h2>
+        <p>Organize members and assign roles quickly.</p>
+      </div>
+      <div class="feature-card">
+        <h2>Raise Motions</h2>
+        <p>Submit proposals and start threaded discussions.</p>
+      </div>
+      <div class="feature-card">
+        <h2>Vote & Record</h2>
+        <p>Cast votes and store decisions for easy reference.</p>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
-
