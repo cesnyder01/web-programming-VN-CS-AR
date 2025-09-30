@@ -8,12 +8,68 @@
 <body>
   <div class="wrapper">
     <h1>Create a Committee</h1>
-    <div class="box">
-      <p>Committee Name</p>
-      <p>Add Members + Assign Roles</p>
-      <p>Set Permissions (create motion, discussion, vote)</p>
-      <button>Save Committee</button>
+
+    <div class="committee-name">
+      <label for="committeeName">Committee Name:</label>
+      <inpu type="text" id="committeeName" name="CommitteeName" placeholder="Enter a committee name">
+    </div>
+
+    <div class="content">
+      <div class="add=member"></div>
+        <h2>Add New Member</h2>
+        <form id="memberForm">
+          <label for="memberName">Name:</label>
+          <input type="text" id="memberName" name="memberName" required>
+
+          <label for="memberRole">Role:</label>
+          <input type="text" id="memberRole" name="memberRole" required>
+
+          <p>Permissions:</p>
+          <label><input type="checkbox" name="permissions" value="createMotion" checked> Create Motion</label><br>
+          <label><input type="checkbox" name="permissions" value="discussion" checked> Discussion</label><br>
+          <label><input type="checkbox" name="permissions" value="moveToVote" checked> Move to Vote</label><br>
+          <label><input type="checkbox" name="permissions" value="vote" checked> Vote</label><br>
+
+          <button type="submit" class="add-btn">Add Member</button>
+        </form>
+    </div>
+
+    <div class="members-list">
+        <h2>Members List</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Member 1</td>
+              <td>Owner</td>
+              <td>
+                <button class="remove-btn">Remove</button>
+                <button class="edit-btn">Edit</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Member 2</td>
+              <td>Chair</td>
+              <td>
+                <button class="remove-btn">Remove</button>
+                <button class="edit-btn">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="save-container">
+      <button class="save-btn">Save Committee</button>
     </div>
   </div>
 </body>
 </html>
+
