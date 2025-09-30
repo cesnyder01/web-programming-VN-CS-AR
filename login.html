@@ -9,10 +9,19 @@
   <div class="wrapper">
     <h1>Login</h1>
     <div class="box">
+        <form action = "/login" method="POST">
+            <label for "email">Email</label>
+            <input type="email" id ="email" placeholder="Enter Your Email" required>
+        
+            <label for="password>Password</label>
+            <input type = "password" id="password" name="password" placeholder="Enter Your Password" required>
+
+            <button type ="submit">Login</button>
+        </form>
       <p>Email</p>
-      <p>Password</p>
-      <button>Login</button>
-      <p><a href="register.html">Create an account</a></p>
+
+      <p><a href="register.html">Create An Account</a></p>
+   
     </div>
   </div>
 </body>
