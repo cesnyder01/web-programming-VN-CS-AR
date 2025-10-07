@@ -1,21 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Dashboard</title>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <div class="wrapper">
+  <div class="dashboard wrapper">
     <h1>Dashboard</h1>
-    <div class="box">
-      <p>List of your committees</p>
-      <button>Create New Committee</button>
+
+    <!-- Committees Section -->
+    <div class="box committees-section">
+      <h2>Your Committees</h2>
+      <p>View, manage, or create committees you are a part of.</p>
+      <button type="button" class="create-btn">Create New Committee</button>
     </div>
-    <div class="box">
-      <p>Recent Motions / Activity Feed</p>
+
+    <!-- Activity Feed Section -->
+    <div class="box activity-section">
+      <h2>Recent Motions / Activity Feed</h2>
+      <ul class="activity-list">
+        <li><strong>Motion Passed:</strong> Update meeting rules for Budget Committee</li>
+        <li><strong>New Member Added:</strong> Sarah W. to Policy Review Committee</li>
+        <li><strong>Meeting Scheduled:</strong> Climate Action Committee - Thursday 3 PM</li>
+      </ul>
     </div>
   </div>
 </body>
 </html>
-

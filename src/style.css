@@ -1,13 +1,13 @@
-:root{
-    --peach: #FFD5C2;
-    --wine:  #8B1E3F;
-    --cream: #F0E7D8;
-    --rose:  #CE6D8B;
-    --sand:  #DDC9B4;
+:root {
+  --peach: #FFD5C2;
+  --wine:  #8B1E3F;
+  --cream: #F0E7D8;
+  --rose:  #CE6D8B;
+  --sand:  #DDC9B4;
   
-    --bg: #f5f5f5;
-    --border: #ccc;
-    --text: #222;
+  --bg: #f5f5f5;
+  --border: #ccc;
+  --text: #222;
 }
 
 * { box-sizing: border-box; }
@@ -15,36 +15,40 @@
 body {
   margin: 0;
   font-family: 'Abhaya Libre', serif;
-  background: #ffffff;      /* pure white background */
+  background: #ffffff;
   color: var(--text);
 }
 
+/* ---------- GLOBAL WRAPPER ---------- */
 .wrapper {
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem;
-  background: white;
-  border-radius: 10px; 
+  background: #fff;
+  border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
 }
 
-/* ---------- Header ---------- */
+/* ---------- HEADER ---------- */
 .site-header {
   background: var(--cream);
   border-bottom: 1px solid #ddd;
 }
+
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
 }
+
 .brand {
   font-weight: 800;
   font-size: 1.8rem;
   color: var(--wine);
   text-decoration: none;
 }
+
 .nav-links a {
   margin-left: 1rem;
   font-weight: 600;
@@ -52,7 +56,7 @@ body {
   text-decoration: none;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- BUTTONS ---------- */
 .btn-primary,
 .btn-outline {
   display: inline-block;
@@ -62,17 +66,13 @@ body {
   font-weight: 700;
 }
 
-/* Solid wine-colored button */
 .btn-primary {
   background: var(--wine);
   color: #fff;
   border: none;
 }
-.btn-primary:hover {
-  opacity: 0.9;
-}
+.btn-primary:hover { opacity: 0.9; }
 
-/* Outline button */
 .btn-outline {
   border: 2px solid var(--wine);
   color: var(--wine);
@@ -82,35 +82,39 @@ body {
   color: #fff;
 }
 
-/* ---------- Hero Section ---------- */
+/* ---------- HERO SECTION ---------- */
 .hero {
   text-align: center;
   padding: 4rem 0 2rem;
 }
+
 .hero-title {
   font-weight: 800;
   font-size: clamp(2rem, 5vw, 3rem);
   color: var(--wine);
   margin-bottom: 1rem;
 }
+
 .hero-subtitle {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
   color: #444;
 }
+
 .hero-actions {
   display: flex;
   justify-content: center;
   gap: 1rem;
 }
 
-/* ---------- Features Grid ---------- */
+/* ---------- FEATURES GRID ---------- */
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
   padding: 2rem 0;
 }
+
 .feature-card {
   border: 1px solid var(--wine);
   border-radius: 6px;
@@ -118,11 +122,194 @@ body {
   text-align: center;
   background: var(--cream);
 }
+
 .feature-card h2 {
   font-weight: 800;
   color: var(--wine);
   margin-top: 0;
 }
-.feature-card p {
-  color: #555;
+
+.feature-card p { color: #555; }
+
+/* ---------- LOGIN + REGISTER PAGES ---------- */
+.login, .register {
+  max-width: 480px;
+  margin: 4rem auto;
+  padding: 2rem 3rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.login h1, .register h1 {
+  text-align: center;
+  color: var(--wine);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+
+.user-inputs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-inputs label {
+  flex: 1;
+  text-align: right;
+  font-weight: 600;
+  color: var(--wine);
+}
+
+.user-inputs input {
+  flex: 2;
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--cream) !important;
+  color: var(--text);
+  font-size: 1rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.user-inputs input::placeholder { color: #666; }
+
+.login button,
+.register button {
+  display: block;
+  margin: 1.5rem auto 0;
+  padding: 0.6rem 1.4rem;
+  background: var(--wine);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.login button:hover,
+.register button:hover { opacity: 0.9; }
+
+/* ---------- DASHBOARD ---------- */
+.dashboard {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.dashboard h1 {
+  text-align: center;
+  color: var(--wine);
+  margin-bottom: 2rem;
+}
+
+.dashboard .box {
+  background: var(--cream);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.dashboard button {
+  background: var(--wine);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+/* ---------- COMMITTEE CREATE / EDIT ---------- */
+.committee-create, .committee-edit {
+  max-width: 800px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.committee-create h1, .committee-edit h1 {
+  color: var(--wine);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.committee-create label, .committee-edit label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.committee-create input, .committee-edit input {
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--cream);
+}
+
+.committee-create button, .committee-edit button {
+  margin-top: 1.5rem;
+  background: var(--wine);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.committee-create button:hover, .committee-edit button:hover { opacity: 0.9; }
+
+/* === LOGIN + REGISTER FIXED LAYOUT === */
+.login form label,
+.register form label {
+  display: block;
+  margin: 0.5rem 0 0.2rem;
+  font-weight: 600;
+  color: var(--wine);
+}
+
+.login form input,
+.register form input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--cream);
+  color: var(--text);
+  font-size: 1rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.login form input::placeholder,
+.register form input::placeholder {
+  color: #666;
+}
+
+.login button,
+.register button {
+  display: block;
+  width: 50%;
+  margin: 1.5rem auto 0;
+  padding: 0.7rem 1rem;
+  background: var(--wine);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.login button:hover,
+.register button:hover {
+  opacity: 0.9;
 }

@@ -1,17 +1,23 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Edit Committee</title>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <div class="wrapper">
+  <div class="committee-edit wrapper">
     <h1>Edit Committee</h1>
-    <div class="box">
-      <p>Edit committee name</p>
-      <p>Change member roles / permissions</p>
-      <button>Save Changes</button>
+    <div class="edit-box">
+      <form action="/edit-committee" method="POST">
+        <label for="committee-name">Committee Name</label>
+        <input type="text" id="committee-name" name="committee-name" placeholder="Enter new committee name" required>
+
+        <label for="roles">Update Member Roles / Permissions</label>
+        <input type="text" id="roles" name="roles" placeholder="e.g. Chair → Member, Member → Chair">
+
+        <button type="submit">Save Changes</button>
+      </form>
     </div>
   </div>
 </body>
