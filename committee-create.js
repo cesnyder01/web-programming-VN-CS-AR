@@ -6,6 +6,10 @@ let editingId = null;      // currently editing member id (or null)
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
+// --- Shared Data (from app.js) ---
+let appData = JSON.parse(localStorage.getItem("appData")) || { users: [], auth: {}, committees: [] };
+
+// --- Member Management Helpers ---
 function getPermissionsFromForm() {
   return $$('#permissionsGroup input[name="permissions"]:checked').map(c => c.value);
 }
@@ -55,7 +59,6 @@ function renderMembers() {
     removeBtn.addEventListener('click', () => removeMember(m.id));
 
     tdActions.append(editBtn, ' ', removeBtn);
-
     tr.append(tdName, tdRole, tdPerm, tdActions);
     tbody.appendChild(tr);
   });
@@ -191,19 +194,24 @@ async function submitCommittee(e) {
     return;
   }
 
-  const payload = {
-    committeeName,
+  const newCommittee = {
+    id: Date.now(),
+    name: committeeName,
     members,
-    //default settings CAN REMOVE
-    settings: { offlineMode: true, minSpeakersBeforeVote: 2, recordNamesInVotes: false, allowSpecialMotions: true }
+    settings: { 
+      offlineMode: true, 
+      minSpeakersBeforeVote: 2, 
+      recordNamesInVotes: false, 
+      allowSpecialMotions: true 
+    }
   };
 
   try {
     const resp = await fetch('/create-committee', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      credentials: 'include' // in case you rely on cookies/session
+      body: JSON.stringify(newCommittee),
+      credentials: 'include'
     });
 
     if (!resp.ok) {
@@ -211,13 +219,14 @@ async function submitCommittee(e) {
       throw new Error(err || `Request failed with status ${resp.status}`);
     }
 
-    // UX
+    // ✅ Save to shared appData for persistence
+    appData.committees.push(newCommittee);
+    localStorage.setItem("appData", JSON.stringify(appData));
+
     const data = await resp.json().catch(() => ({}));
     alert('Committee created successfully!');
-    // Redirect if backend returns a URL or ID
-    // if (data.committeeId) window.location.href = `/committee/${data.committeeId}`;
-    // else window.location.href = '/committees';
-    // For now, reset:
+
+    // Reset UI
     $('#createCommitteeForm').reset();
     members = [];
     renderMembers();
@@ -229,14 +238,9 @@ async function submitCommittee(e) {
 
 // --- Event bindings ---
 document.addEventListener('DOMContentLoaded', () => {
-  // Buttons
   $('#addMemberBtn').addEventListener('click', addMemberFromForm);
   $('#saveEditBtn').addEventListener('click', saveEditFromForm);
   $('#cancelEditBtn').addEventListener('click', cancelEdit);
-
-  // Submit
   $('#createCommitteeForm').addEventListener('submit', submitCommittee);
-
-  // Initial render
   renderMembers();
 });
