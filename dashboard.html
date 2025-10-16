@@ -7,7 +7,11 @@
 </head>
 <body>
   <div class="dashboard wrapper">
-    <h1>Dashboard</h1>
+    <!-- Header with user name + logout -->
+    <div class="dashboard-header">
+      <h1>Welcome, <span id="userName">User</span>!</h1>
+      <button id="logoutBtn">Logout</button>
+    </div>
 
     <!-- Committees Section -->
     <div class="box committees-section">
@@ -26,5 +30,32 @@
       </ul>
     </div>
   </div>
+
+  <!-- Scripts -->
+  <script src="src/app.js"></script>
+  <script>
+    // Load user info from localStorage
+    const data = JSON.parse(localStorage.getItem("appData"));
+    const user = data?.auth?.currentUser;
+
+    const userNameDisplay = document.getElementById("userName");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (!data?.auth?.isLoggedIn || !user) {
+      // Not logged in — redirect to login
+      window.location.href = "login.html";
+    } else {
+      // Show logged-in user's name
+      userNameDisplay.textContent = user.name;
+    }
+
+    // Logout logic
+    logoutBtn.addEventListener("click", () => {
+      data.auth.isLoggedIn = false;
+      data.auth.currentUser = null;
+      localStorage.setItem("appData", JSON.stringify(data));
+      window.location.href = "login.html";
+    });
+  </script>
 </body>
 </html>

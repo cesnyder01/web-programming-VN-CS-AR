@@ -224,6 +224,32 @@ body {
   cursor: pointer;
 }
 
+/* ---------- DASHBOARD HEADER (Welcome + Logout) ---------- */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--cream);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+#logoutBtn {
+  background: var(--wine);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#logoutBtn:hover {
+  opacity: 0.9;
+}
+
 /* ---------- COMMITTEE CREATE / EDIT ---------- */
 .committee-create, .committee-edit {
   max-width: 800px;
