@@ -2,6 +2,7 @@
 
 Authors: VN, AR, CS
 
+<<<<<<< HEAD
 This project has been migrated to a single-page React application with React Router. Legacy static HTML/JS pages remain in the root for reference, but the app now runs from `index.html` mounting React into `#root` and routing all pages client-side.
 
 ## Getting Started
@@ -28,3 +29,6 @@ This project has been migrated to a single-page React application with React Rou
 
 - Old files like `login.html`, `register.html`, and `committee-create.html` are no longer used.
 - The committee create form submits to `/create-committee`. Update this endpoint to match your backend or adapt as needed.
+=======
+# https://rulesoforder.netlify.app/ 
+>>>>>>> main
