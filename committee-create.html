@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <title>Create Committee</title>
   <link rel="stylesheet" href="src/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
   <div class="committee-create wrapper">
     <h1>Create a Committee</h1>
 
-    <form id="createCommitteeForm" action="/create-committee" method="POST">
-      <!-- Committee Name -->
+    <form id="createCommitteeForm">
+      <!-- Commitee Name -->
       <div class="committee-name">
         <label for="committeeName">Committee Name:</label>
         <input type="text" id="committeeName" name="committeeName" placeholder="Enter a committee name" required>
       </div>
 
-      <!-- Add New Member -->
+      <!-- Adding a New Member -->
       <div class="add-member">
         <h2>Add New Member</h2>
         <div class="member-form">
@@ -24,17 +25,25 @@
           <input type="text" id="memberName" name="memberName" placeholder="Member name" required>
 
           <label for="memberRole">Role:</label>
-          <input type="text" id="memberRole" name="memberRole" placeholder="Member role" required>
+          <select id="memberRole" name="memberRole" required>
+            <option value="" disabled selected>Select a role</option>
+            <option value="owner">Owner</option>
+            <option value="chair">Chair</option>
+            <option value="member">Member</option>
+            <option value="observer">Observer</option>
+          </select>
 
           <p>Permissions:</p>
-          <div class="permissions">
+          <div class="permissions" id="permissionsGroup">
             <label><input type="checkbox" name="permissions" value="createMotion" checked> Create Motion</label><br>
             <label><input type="checkbox" name="permissions" value="discussion" checked> Discussion</label><br>
             <label><input type="checkbox" name="permissions" value="moveToVote" checked> Move to Vote</label><br>
             <label><input type="checkbox" name="permissions" value="vote" checked> Vote</label>
           </div>
 
-          <button type="button" class="add-btn">Add Member</button>
+          <button type="button" class="add-btn" id="addMemberBtn">Add Member</button>
+          <button type="button" class="add-btn" id="saveEditBtn" style="display:none;">Save Edit</button>
+          <button type="button" class="add-btn" id="cancelEditBtn" style="display:none;">Cancel</button>
         </div>
       </div>
 
@@ -46,35 +55,21 @@
             <tr>
               <th>Name</th>
               <th>Role</th>
+              <th>Permissions</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>Member 1</td>
-              <td>Owner</td>
-              <td>
-                <button class="remove-btn">Remove</button>
-                <button class="edit-btn">Edit</button>
-              </td>
-            </tr>
-            <tr>
-              <td>Member 2</td>
-              <td>Chair</td>
-              <td>
-                <button class="remove-btn">Remove</button>
-                <button class="edit-btn">Edit</button>
-              </td>
-            </tr>
+          <tbody id="membersTbody">
           </tbody>
         </table>
+        <p id="membersHint" class="hint">Tip: You must have exactly one Owner.</p>
       </div>
 
       <div class="save-container">
-        <button class="save-btn">Save Committee</button>
+        <button class="save-btn" id="saveCommitteeBtn" type="submit">Save Committee</button>
       </div>
     </form>
   </div>
-  <script src="src/app.js"></script>
+  <script src="src/committee-create.js"></script>
 </body>
 </html>
