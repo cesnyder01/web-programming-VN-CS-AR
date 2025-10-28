@@ -1,10 +1,16 @@
-<<<<<<< HEAD
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
-function cap(s) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+const defaultPermissions = ["createMotion", "discussion", "moveToVote", "vote"];
+
+function cap(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
+}
+
+function safeId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export default function CommitteeCreate() {
@@ -12,131 +18,100 @@ export default function CommitteeCreate() {
   const { appData, setAppData } = useAuth();
 
   const [committeeName, setCommitteeName] = useState("");
-  const [members, setMembers] = useState([]); // { id, name, role, permissions }
+  const [members, setMembers] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  const hasOwner = useMemo(
-    () => members.some((m) => m.role === "owner"),
-    [members]
-  );
-=======
-// src/pages/CommitteeCreate.jsx
-import React, { useMemo, useState } from "react";
-
-export default function CommitteeCreate() {
-  const [committeeName, setCommitteeName] = useState("");
-  const [members, setMembers] = useState([]); // {id,name,role,permissions:[]}
-  const [editingId, setEditingId] = useState(null);
->>>>>>> main
   const ownerCount = useMemo(
     () => members.filter((m) => m.role === "owner").length,
     [members]
   );
-<<<<<<< HEAD
 
-  const [memberForm, setMemberForm] = useState({
-    name: "",
-    role: "",
-    permissions: ["createMotion", "discussion", "moveToVote", "vote"],
-  });
+  const editingMember = members.find((m) => m.id === editingId) || null;
 
-  function resetMemberInputs() {
-    setMemberForm({ name: "", role: "", permissions: ["createMotion", "discussion", "moveToVote", "vote"] });
+  function addMember(member) {
+    const name = member.name?.trim();
+    const role = member.role;
+    const permissions = member.permissions?.length
+      ? [...member.permissions]
+      : [...defaultPermissions];
+
+    if (!name || !role) {
+      alert("Please provide a name and select a role.");
+      return;
+    }
+    if (role === "owner" && ownerCount >= 1) {
+      alert("There can be only one Owner. Update the existing Owner first.");
+      return;
+    }
+
+    setMembers((prev) => [
+      ...prev,
+      { id: safeId(), name, role, permissions },
+    ]);
   }
 
   function startEdit(id) {
-    const m = members.find((x) => x.id === id);
-    if (!m) return;
     setEditingId(id);
-    setMemberForm({ name: m.name, role: m.role, permissions: [...m.permissions] });
   }
 
   function cancelEdit() {
     setEditingId(null);
-    resetMemberInputs();
+  }
+
+  function saveEdit(member) {
+    const name = member.name?.trim();
+    const role = member.role;
+    const permissions = member.permissions?.length
+      ? [...member.permissions]
+      : [...defaultPermissions];
+
+    if (!member.id) return;
+    if (!name || !role) {
+      alert("Please provide a name and select a role.");
+      return;
+    }
+
+    setMembers((prev) => {
+      const idx = prev.findIndex((m) => m.id === member.id);
+      if (idx === -1) return prev;
+
+      const wasOwner = prev[idx].role === "owner";
+      const willBeOwner = role === "owner";
+      const existingOwnerCount = prev.filter((m) => m.role === "owner").length;
+
+      if (willBeOwner && !wasOwner && existingOwnerCount >= 1) {
+        alert("There can be only one Owner. Update the existing Owner first.");
+        return prev;
+      }
+      if (!willBeOwner && wasOwner && existingOwnerCount === 1) {
+        alert("You must have exactly one Owner. Assign a new Owner before changing this role.");
+        return prev;
+      }
+
+      const next = [...prev];
+      next[idx] = { ...next[idx], name, role, permissions };
+      return next;
+    });
+    setEditingId(null);
   }
 
   function removeMember(id) {
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-    if (editingId === id) cancelEdit();
-  }
-
-  function togglePerm(value) {
-    setMemberForm((prev) => {
-      const exists = prev.permissions.includes(value);
-      return {
-        ...prev,
-        permissions: exists
-          ? prev.permissions.filter((p) => p !== value)
-          : [...prev.permissions, value],
-      };
+    setMembers((prev) => {
+      const target = prev.find((m) => m.id === id);
+      const remaining = prev.filter((m) => m.id !== id);
+      if (target?.role === "owner") {
+        const stillHasOwner = remaining.some((m) => m.role === "owner");
+        if (!stillHasOwner) {
+          alert("You must have exactly one Owner. Assign a new Owner before removing this one.");
+          return prev;
+        }
+      }
+      return remaining;
     });
+    if (editingId === id) setEditingId(null);
   }
 
-  function addMemberFromForm() {
-    const name = memberForm.name.trim();
-    const role = memberForm.role;
-    const permissions = memberForm.permissions;
-
-    if (!name || !role) {
-      alert("Please provide a name and select a role.");
-      return;
-    }
-    if (role === "owner" && hasOwner) {
-      alert("There can be only one Owner. Change the existing Owner to another role first.");
-      return;
-=======
-  const editingMember = members.find((m) => m.id === editingId) || null;
-
-  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-
-  function addMember({ name, role, permissions }) {
-    if (!name || !role) return alert("Please provide a name and select a role.");
-    if (role === "owner" && ownerCount >= 1) {
-      return alert("There can be only one Owner. Change the existing Owner first.");
->>>>>>> main
-    }
-    setMembers((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name, role, permissions },
-    ]);
-<<<<<<< HEAD
-    resetMemberInputs();
-  }
-
-  function saveEditFromForm() {
-    if (!editingId) return;
-    const name = memberForm.name.trim();
-    const role = memberForm.role;
-    const permissions = memberForm.permissions;
-
-    if (!name || !role) {
-      alert("Please provide a name and select a role.");
-      return;
-    }
-
-    const idx = members.findIndex((m) => m.id === editingId);
-    if (idx === -1) return;
-
-    const wasOwner = members[idx].role === "owner";
-    const willBeOwner = role === "owner";
-
-    if (willBeOwner && ownerCount === 1 && !wasOwner) {
-      alert("There can be only one Owner. Change the existing Owner to another role first.");
-      return;
-    }
-    if (!willBeOwner && wasOwner && ownerCount === 1) {
-      alert("You must have exactly one Owner. Assign another member as Owner before changing this role.");
-      return;
-    }
-
-    const updated = [...members];
-    updated[idx] = { ...updated[idx], name, role, permissions };
-    setMembers(updated);
-    cancelEdit();
-  }
-
-  async function submitCommittee(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const name = committeeName.trim();
     if (!name) {
@@ -151,103 +126,21 @@ export default function CommitteeCreate() {
       alert("You must have exactly one Owner.");
       return;
     }
-=======
-  }
 
-  function startEdit(id) {
-    setEditingId(id);
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-  }
-
-  function saveEdit(updated) {
-    if (!updated.name || !updated.role)
-      return alert("Please provide a name and select a role.");
-
-    setMembers((prev) => {
-      const idx = prev.findIndex((m) => m.id === updated.id);
-      if (idx === -1) return prev;
-
-      const wasOwner = prev[idx].role === "owner";
-      const willBeOwner = updated.role === "owner";
-      const currentOwnerCount = prev.filter((m) => m.role === "owner").length;
-
-      if (willBeOwner && !wasOwner && currentOwnerCount >= 1) {
-        alert("There can be only one Owner. Change the existing Owner first.");
-        return prev;
-      }
-      if (!willBeOwner && wasOwner && currentOwnerCount === 1) {
-        alert("You must have exactly one Owner. Assign another Owner first.");
-        return prev;
-      }
-
-      const copy = [...prev];
-      copy[idx] = updated;
-      return copy;
-    });
-    setEditingId(null);
-  }
-
-  function removeMember(id) {
-    setMembers((prev) => {
-      const target = prev.find((m) => m.id === id);
-      const next = prev.filter((m) => m.id !== id);
-      if (target?.role === "owner") {
-        const stillHasOwner = next.some((m) => m.role === "owner");
-        if (!stillHasOwner) {
-          alert("You must have exactly one Owner. Assign a new Owner first.");
-          return prev;
-        }
-      }
-      return next;
-    });
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const name = committeeName.trim();
-    if (!name) return alert("Please enter a committee name.");
-    if (members.length === 0)
-      return alert("Please add at least one member (and exactly one Owner).");
-    if (ownerCount !== 1) return alert("You must have exactly one Owner.");
->>>>>>> main
+    const settings = {
+      offlineMode: true,
+      minSpeakersBeforeVote: 2,
+      recordNamesInVotes: false,
+      allowSpecialMotions: true,
+    };
 
     const payload = {
       committeeName: name,
       members,
-<<<<<<< HEAD
-      settings: { offlineMode: true, minSpeakersBeforeVote: 2, recordNamesInVotes: false, allowSpecialMotions: true },
+      settings,
     };
 
-    try {
-      const resp = await fetch('/create-committee', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-
-      // add locally for demo flow
-      const newCommittee = { id: Date.now(), name, members, motions: [] };
-      setAppData({ ...appData, committees: [...(appData.committees||[]), newCommittee] });
-      alert('Committee created successfully!');
-      navigate(`/committees/${newCommittee.id}`);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to create committee: ' + err.message);
-=======
-      // default settings (remove if your backend sets these)
-      settings: {
-        offlineMode: true,
-        minSpeakersBeforeVote: 2,
-        recordNamesInVotes: false,
-        allowSpecialMotions: true,
-      },
-    };
-
+    let remoteSuccess = false;
     try {
       const resp = await fetch("/create-committee", {
         method: "POST",
@@ -256,272 +149,222 @@ export default function CommitteeCreate() {
         body: JSON.stringify(payload),
       });
       if (!resp.ok) throw new Error(await resp.text());
-      await resp.json().catch(() => ({}));
-      alert("Committee created successfully!");
-      setCommitteeName("");
-      setMembers([]);
+      remoteSuccess = true;
     } catch (err) {
-      console.error(err);
-      alert("Failed to create committee: " + (err?.message || String(err)));
->>>>>>> main
+      console.warn("Failed to sync committee with backend:", err);
     }
+
+    const newCommittee = {
+      id: safeId(),
+      name,
+      members,
+      motions: [],
+      settings,
+      createdAt: new Date().toISOString(),
+    };
+
+    const nextCommittees = [...(appData.committees || []), newCommittee];
+    setAppData({ ...appData, committees: nextCommittees });
+
+    alert(
+      remoteSuccess
+        ? "Committee created successfully!"
+        : "Committee saved locally. Connect the backend endpoint to sync remote data."
+    );
+
+    setCommitteeName("");
+    setMembers([]);
+    setEditingId(null);
+    navigate(`/committees/${newCommittee.id}`);
   }
 
   return (
-<<<<<<< HEAD
-    <div className="committee-create wrapper">
-      <h1>Create a Committee</h1>
-      <form onSubmit={submitCommittee} id="createCommitteeForm">
-        <div className="committee-name">
-          <label htmlFor="committeeName">Committee Name:</label>
-          <input id="committeeName" value={committeeName} onChange={(e)=>setCommitteeName(e.target.value)} placeholder="Enter a committee name" required />
-        </div>
-
-        <div className="add-member">
-          <h2>Add New Member</h2>
-          <div className="member-form">
-            <label htmlFor="memberName">Name:</label>
-            <input id="memberName" value={memberForm.name} onChange={(e)=>setMemberForm((p)=>({...p, name: e.target.value}))} placeholder="Member name" required />
-
-            <label htmlFor="memberRole">Role:</label>
-            <select id="memberRole" value={memberForm.role} onChange={(e)=>setMemberForm((p)=>({...p, role: e.target.value}))} required>
-              <option value="" disabled>Select a role</option>
-              <option value="owner">Owner</option>
-              <option value="chair">Chair</option>
-              <option value="member">Member</option>
-              <option value="observer">Observer</option>
-            </select>
-
-            <p>Permissions:</p>
-            <div className="permissions" id="permissionsGroup">
-              {[
-                { key: 'createMotion', label: 'Create Motion' },
-                { key: 'discussion', label: 'Discussion' },
-                { key: 'moveToVote', label: 'Move to Vote' },
-                { key: 'vote', label: 'Vote' },
-              ].map((perm) => (
-                <label key={perm.key} style={{ display: 'block' }}>
-                  <input
-                    type="checkbox"
-                    checked={memberForm.permissions.includes(perm.key)}
-                    onChange={() => togglePerm(perm.key)}
-                  /> {perm.label}
-                </label>
-              ))}
+    <div className="min-h-screen bg-gradient-to-br from-cream via-peach to-sand">
+      <div className="mx-auto max-w-6xl px-6 py-10 md:px-10">
+        <form onSubmit={handleSubmit} className="space-y-10">
+          <header className="card border border-cream/80 bg-white/90 p-6">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <span className="badge">Committee Builder</span>
+                <h1 className="mt-2 text-3xl font-bold text-wine">Create a committee</h1>
+                <p className="text-sm text-text/65">
+                  Name your group, assign one owner, and tailor permissions for every member.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text/70">
+                <p className="font-semibold text-wine">Tip</p>
+                <p>Exactly one member must hold the Owner role to manage chair settings.</p>
+              </div>
             </div>
+          </header>
 
-            {!editingId ? (
-              <button type="button" className="add-btn" onClick={addMemberFromForm}>Add Member</button>
-            ) : (
-              <>
-                <button type="button" className="add-btn" onClick={saveEditFromForm}>Save Edit</button>
-                <button type="button" className="add-btn" onClick={cancelEdit}>Cancel</button>
-              </>
-            )}
-          </div>
-        </div>
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <section className="card border border-cream/70 bg-white/90 p-6">
+              <div>
+                <label htmlFor="committeeName" className="block text-sm font-semibold text-wine">
+                  Committee name
+                  <input
+                    id="committeeName"
+                    type="text"
+                    value={committeeName}
+                    onChange={(e) => setCommitteeName(e.target.value)}
+                    placeholder="e.g. Sustainability Task Force"
+                    className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                    required
+                  />
+                </label>
+              </div>
 
-        <div className="members-list">
-          <h2>Members List</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Permissions</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="membersTbody">
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="empty">No members added yet.</td>
-                </tr>
-              ) : (
-                members.map((m) => (
-                  <tr key={m.id}>
-                    <td>{m.name}</td>
-                    <td>{cap(m.role)}</td>
-                    <td>{m.permissions.length ? m.permissions.join(', ') : '—'}</td>
-                    <td>
-                      <button className="edit-btn" type="button" onClick={() => startEdit(m.id)}>Edit</button>
-                      <button className="delete-btn" type="button" onClick={() => removeMember(m.id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          <p id="membersHint" className="hint">Tip: You must have exactly one Owner.</p>
-        </div>
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-wine">Add / edit member</h2>
+                <p className="text-sm text-text/65">
+                  Owners manage settings, chairs moderate meetings, members participate, and observers follow along.
+                </p>
+                <MemberForm
+                  key={editingMember?.id || "new-member"}
+                  initial={editingMember || undefined}
+                  onAdd={addMember}
+                  onSave={saveEdit}
+                  onCancel={cancelEdit}
+                />
+              </div>
+            </section>
 
-        <div className="save-container">
-          <button className="save-btn" id="saveCommitteeBtn" type="submit">Save Committee</button>
-        </div>
-      </form>
-=======
-    <div className="min-h-screen w-full flex justify-center">
-      <div className="w-full max-w-3xl p-6">
-        <h1 className="text-2xl font-bold mb-6">Create a Committee</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Committee Name */}
-          <div>
-            <label htmlFor="committeeName" className="block text-sm font-medium mb-1">
-              Committee Name
-            </label>
-            <input
-              id="committeeName"
-              type="text"
-              value={committeeName}
-              onChange={(e) => setCommitteeName(e.target.value)}
-              placeholder="Enter a committee name"
-              className="w-full border rounded-lg px-3 py-2"
-              required
-            />
+            <section className="card border border-cream/70 bg-white/90 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-wine">Members</h2>
+                <span className="rounded-full bg-rose/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
+                  {members.length} total
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-text/65">
+                Tip: Ensure exactly one Owner is assigned before saving the committee.
+              </p>
+              <MembersTable members={members} onEdit={startEdit} onRemove={removeMember} />
+            </section>
           </div>
 
-          {/* Add / Edit Member */}
-          <div>
-            <h2 className="text-xl font-semibold mb-3">Add / Edit Member</h2>
-            <MemberForm
-              key={editingMember?.id || "new"}
-              initial={editingMember || undefined}
-              onAdd={addMember}
-              onSave={saveEdit}
-              onCancel={cancelEdit}
-            />
-          </div>
-
-          {/* Members List */}
-          <div>
-            <h2 className="text-xl font-semibold mb-3">Members</h2>
-            <MembersTable
-              members={members}
-              cap={cap}
-              onEdit={startEdit}
-              onRemove={removeMember}
-            />
-            <p className="text-sm text-gray-500 mt-2">
-              Tip: You must have exactly one Owner.
-            </p>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 rounded-lg border bg-black text-white"
-            >
-              Save Committee
+          <div className="flex justify-end">
+            <button type="submit" className="btn-primary px-10">
+              Save committee
             </button>
           </div>
         </form>
       </div>
->>>>>>> main
     </div>
   );
 }
 
-<<<<<<< HEAD
-=======
 function MemberForm({ initial, onAdd, onSave, onCancel }) {
   const [name, setName] = useState(initial?.name || "");
   const [role, setRole] = useState(initial?.role || "");
   const [permissions, setPermissions] = useState(
-    initial?.permissions || ["createMotion", "discussion", "moveToVote", "vote"]
+    initial?.permissions?.length ? [...initial.permissions] : [...defaultPermissions]
   );
 
   const isEditing = Boolean(initial?.id);
 
-  function togglePerm(p) {
+  function togglePermission(permission) {
     setPermissions((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
     );
   }
 
-  function handleAddOrSave() {
-    const member = {
+  function handleSubmit() {
+    const nextMember = {
       id: initial?.id,
-      name: name.trim(),
+      name,
       role,
-      permissions,
+      permissions: [...permissions],
     };
-    if (isEditing) onSave(member);
-    else onAdd(member);
-    if (!isEditing) {
+    if (isEditing) onSave(nextMember);
+    else {
+      onAdd(nextMember);
       setName("");
       setRole("");
-      setPermissions(["createMotion", "discussion", "moveToVote", "vote"]);
+      setPermissions([...defaultPermissions]);
     }
   }
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <div className="col-span-1">
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <input
-          type="text"
-          className="w-full border rounded-lg px-3 py-2"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Member name"
-          required
-        />
+    <div className="mt-6 space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block text-sm font-semibold text-wine" htmlFor="member-name">
+          Name
+          <input
+            id="member-name"
+            type="text"
+            className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Member name"
+            required
+          />
+        </label>
+
+        <label className="block text-sm font-semibold text-wine" htmlFor="member-role">
+          Role
+          <select
+            id="member-role"
+            className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-base text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Select a role
+            </option>
+            <option value="owner">Owner</option>
+            <option value="chair">Chair</option>
+            <option value="member">Member</option>
+            <option value="observer">Observer</option>
+          </select>
+        </label>
       </div>
 
-      <div className="col-span-1">
-        <label className="block text-sm font-medium mb-1">Role</label>
-        <select
-          className="w-full border rounded-lg px-3 py-2 bg-white"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Select a role
-          </option>
-          <option value="owner">Owner</option>
-          <option value="chair">Chair</option>
-          <option value="member">Member</option>
-          <option value="observer">Observer</option>
-        </select>
-      </div>
-
-      <div className="col-span-2">
-        <p className="text-sm font-medium mb-1">Permissions</p>
-        <div className="flex flex-wrap gap-4">
+      <div>
+        <p className="text-sm font-semibold text-wine">Permissions</p>
+        <p className="text-xs text-text/60">
+          Choose actions this member can perform during meetings.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-3">
           {[
-            { v: "createMotion", label: "Create Motion" },
-            { v: "discussion", label: "Discussion" },
-            { v: "moveToVote", label: "Move to Vote" },
-            { v: "vote", label: "Vote" },
-          ].map((p) => (
-            <label key={p.v} className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={permissions.includes(p.v)}
-                onChange={() => togglePerm(p.v)}
-              />
-              <span>{p.label}</span>
-            </label>
-          ))}
+            { key: "createMotion", label: "Create Motion" },
+            { key: "discussion", label: "Discussion" },
+            { key: "moveToVote", label: "Move to Vote" },
+            { key: "vote", label: "Vote" },
+          ].map((perm) => {
+            const checked = permissions.includes(perm.key);
+            return (
+              <label
+                key={perm.key}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+                  checked
+                    ? "border-wine bg-wine/10 text-wine"
+                    : "border-cream/80 bg-white/70 text-text/70 hover:border-rose/50 hover:text-wine"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => togglePermission(perm.key)}
+                  className="accent-wine"
+                />
+                <span>{perm.label}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
-      <div className="col-span-2 flex gap-2 pt-1">
-        <button
-          type="button"
-          onClick={handleAddOrSave}
-          className="px-3 py-2 rounded-lg border bg-black text-white"
-        >
-          {isEditing ? "Save Edit" : "Add Member"}
+      <div className="flex flex-wrap gap-3 pt-2">
+        <button type="button" onClick={handleSubmit} className="btn-primary">
+          {isEditing ? "Save changes" : "Add member"}
         </button>
         {isEditing && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-3 py-2 rounded-lg border"
-          >
+          <button type="button" onClick={onCancel} className="btn-secondary">
             Cancel
           </button>
         )}
@@ -530,57 +373,45 @@ function MemberForm({ initial, onAdd, onSave, onCancel }) {
   );
 }
 
-function MembersTable({ members, cap, onEdit, onRemove }) {
+function MembersTable({ members, onEdit, onRemove }) {
   if (!members.length) {
     return (
-      <div className="border rounded-lg p-4 text-sm text-gray-600">
-        No members added yet.
+      <div className="mt-6 rounded-2xl border border-cream/70 bg-peach/30 p-6 text-sm text-text/70">
+        No members added yet. Add at least one owner to continue.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border rounded-lg">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-3 py-2">Name</th>
-            <th className="px-3 py-2">Role</th>
-            <th className="px-3 py-2">Permissions</th>
-            <th className="px-3 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((m) => (
-            <tr key={m.id} className="border-t">
-              <td className="px-3 py-2">{m.name}</td>
-              <td className="px-3 py-2 capitalize">{cap(m.role)}</td>
-              <td className="px-3 py-2 text-sm">
-                {m.permissions?.length ? m.permissions.join(", ") : "—"}
-              </td>
-              <td className="px-3 py-2">
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(m.id)}
-                    className="px-2 py-1 rounded border"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(m.id)}
-                    className="px-2 py-1 rounded border"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="mt-6 space-y-4">
+      {members.map((member) => (
+        <div
+          key={member.id}
+          className="flex flex-col gap-4 rounded-2xl border border-cream/70 bg-white/80 p-5 shadow-inner md:flex-row md:items-center md:justify-between"
+        >
+          <div>
+            <p className="text-base font-semibold text-wine">{member.name}</p>
+            <p className="text-xs uppercase tracking-wide text-text/50">
+              Role • {cap(member.role)}
+            </p>
+            <p className="mt-2 text-sm text-text/70">
+              Permissions: {member.permissions?.length ? member.permissions.join(", ") : "—"}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => onEdit(member.id)} className="btn-secondary">
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onRemove(member.id)}
+              className="inline-flex items-center justify-center rounded-full border border-rose/50 bg-rose/20 px-4 py-2 text-sm font-semibold text-rose transition hover:bg-rose/30"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
->>>>>>> main
