@@ -14,12 +14,46 @@ export function loadAppData() {
         id: 1,
         name: "Sustainability Committee",
         members: [
-          { name: "Alice", role: "Chair", permissions: ["createMotion", "vote", "discussion"] },
-          { name: "Vedha", role: "Member", permissions: ["discussion", "vote"] }
+          {
+            id: "member-1",
+            name: "Alice",
+            role: "owner",
+            permissions: ["createMotion", "vote", "discussion", "moveToVote"],
+          },
+          {
+            id: "member-2",
+            name: "Vedha",
+            role: "chair",
+            permissions: ["createMotion", "discussion", "moveToVote", "vote"],
+          },
+          {
+            id: "member-3",
+            name: "Casey",
+            role: "member",
+            permissions: ["discussion", "vote"],
+          },
         ],
-        motions: []
-      }
-    ]
+        settings: {
+          offlineMode: true,
+          minSpeakersBeforeVote: 2,
+          recordNamesInVotes: false,
+          allowSpecialMotions: true,
+        },
+        motions: [
+          {
+            id: "motion-1",
+            title: "Adopt bi-weekly recycling pickup",
+            description:
+              "Pilot a recycling pickup program every other Friday for the fall semester.",
+            type: "standard",
+            status: "pending",
+            createdAt: "2024-09-15T15:30:00.000Z",
+            createdBy: 1,
+            createdByName: "Alice",
+          },
+        ],
+      },
+    ],
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
   return seed;
@@ -28,4 +62,3 @@ export function loadAppData() {
 export function saveAppData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
-
