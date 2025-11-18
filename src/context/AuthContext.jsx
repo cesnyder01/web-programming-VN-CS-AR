@@ -1,49 +1,95 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
-import { loadAppData, saveAppData } from "../utils/storage.js";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { api } from "../utils/api.js";
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [appData, setAppData] = useState(() => loadAppData());
+const initialState = {
+  auth: { isLoggedIn: false, currentUser: null },
+  committees: [],
+};
 
-  function persist(next) {
-    setAppData(next);
-    saveAppData(next);
+export function AuthProvider({ children }) {
+  const [appData, setAppData] = useState(initialState);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function bootstrap() {
+      try {
+        const { user } = await api.currentUser();
+        if (user) {
+          const { committees } = await api.listCommittees();
+          setAppData({
+            auth: { isLoggedIn: true, currentUser: user },
+            committees: committees || [],
+          });
+        } else {
+          setAppData(initialState);
+        }
+      } catch (err) {
+        setAppData(initialState);
+      } finally {
+        setLoading(false);
+      }
+    }
+    bootstrap();
+  }, []);
+
+  async function refreshCommittees() {
+    try {
+      const { committees } = await api.listCommittees();
+      setAppData((prev) => ({
+        ...prev,
+        committees: committees || [],
+      }));
+    } catch (err) {
+      setError(err.message || "Unable to load committees.");
+    }
   }
 
-  const login = (email, password) => {
-    const user = appData.users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!user) throw new Error("Invalid email or password.");
-    const next = { ...appData, auth: { isLoggedIn: true, currentUser: user } };
-    persist(next);
+  const login = async (email, password) => {
+    const { user } = await api.login({ email, password });
+    setAppData((prev) => ({
+      ...prev,
+      auth: { isLoggedIn: true, currentUser: user },
+    }));
+    await refreshCommittees();
     return user;
   };
 
-  const register = (name, email, password) => {
-    if (appData.users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error("Email already registered.");
-    }
-    const newUser = { id: Date.now(), name, email, password };
-    const nextUsers = [...appData.users, newUser];
-    const next = { ...appData, users: nextUsers, auth: { isLoggedIn: true, currentUser: newUser } };
-    persist(next);
-    return newUser;
+  const register = async (name, email, password) => {
+    const { user } = await api.register({ name, email, password });
+    setAppData({
+      auth: { isLoggedIn: true, currentUser: user },
+      committees: [],
+    });
+    return user;
   };
 
-  const logout = () => {
-    const next = { ...appData, auth: { isLoggedIn: false, currentUser: null } };
-    persist(next);
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      // ignore
+    }
+    setAppData(initialState);
   };
 
   const value = useMemo(
-    () => ({ appData, setAppData: persist, login, register, logout }),
-    [appData]
+    () => ({
+      appData,
+      login,
+      register,
+      logout,
+      refreshCommittees,
+      loading,
+      error,
+      setAppData,
+    }),
+    [appData, loading, error]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
-

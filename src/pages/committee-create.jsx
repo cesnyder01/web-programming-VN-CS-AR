@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { api } from "../utils/api.js";
 
 const defaultPermissions = ["createMotion", "discussion", "moveToVote", "vote"];
 
@@ -15,7 +16,8 @@ function safeId() {
 
 export default function CommitteeCreate() {
   const navigate = useNavigate();
-  const { appData, setAppData } = useAuth();
+  const { refreshCommittees, appData } = useAuth();
+  const currentUser = appData.auth?.currentUser;
 
   const [committeeName, setCommitteeName] = useState("");
   const [members, setMembers] = useState([]);
@@ -28,15 +30,36 @@ export default function CommitteeCreate() {
 
   const editingMember = members.find((m) => m.id === editingId) || null;
 
+  useEffect(() => {
+    if (!currentUser?.email) return;
+    setMembers((prev) => {
+      const exists = prev.some(
+        (member) => member.email?.toLowerCase() === currentUser.email.toLowerCase()
+      );
+      if (exists) return prev;
+      return [
+        {
+          id: safeId(),
+          name: currentUser.name || "Owner",
+          email: currentUser.email,
+          role: "owner",
+          permissions: [...defaultPermissions],
+        },
+        ...prev,
+      ];
+    });
+  }, [currentUser]);
+
   function addMember(member) {
     const name = member.name?.trim();
+    const email = member.email?.trim();
     const role = member.role;
     const permissions = member.permissions?.length
       ? [...member.permissions]
       : [...defaultPermissions];
 
-    if (!name || !role) {
-      alert("Please provide a name and select a role.");
+    if (!name || !email || !role) {
+      alert("Please provide a name, email, and role for each member.");
       return;
     }
     if (role === "owner" && ownerCount >= 1) {
@@ -46,7 +69,7 @@ export default function CommitteeCreate() {
 
     setMembers((prev) => [
       ...prev,
-      { id: safeId(), name, role, permissions },
+      { id: safeId(), name, email, role, permissions },
     ]);
   }
 
@@ -60,14 +83,15 @@ export default function CommitteeCreate() {
 
   function saveEdit(member) {
     const name = member.name?.trim();
+    const email = member.email?.trim();
     const role = member.role;
     const permissions = member.permissions?.length
       ? [...member.permissions]
       : [...defaultPermissions];
 
     if (!member.id) return;
-    if (!name || !role) {
-      alert("Please provide a name and select a role.");
+    if (!name || !email || !role) {
+      alert("Please provide a name, email, and role.");
       return;
     }
 
@@ -135,47 +159,21 @@ export default function CommitteeCreate() {
     };
 
     const payload = {
-      committeeName: name,
-      members,
-      settings,
-    };
-
-    let remoteSuccess = false;
-    try {
-      const resp = await fetch("/create-committee", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-      remoteSuccess = true;
-    } catch (err) {
-      console.warn("Failed to sync committee with backend:", err);
-    }
-
-    const newCommittee = {
-      id: safeId(),
       name,
       members,
-      motions: [],
       settings,
-      createdAt: new Date().toISOString(),
     };
 
-    const nextCommittees = [...(appData.committees || []), newCommittee];
-    setAppData({ ...appData, committees: nextCommittees });
-
-    alert(
-      remoteSuccess
-        ? "Committee created successfully!"
-        : "Committee saved locally. Connect the backend endpoint to sync remote data."
-    );
-
-    setCommitteeName("");
-    setMembers([]);
-    setEditingId(null);
-    navigate(`/committees/${newCommittee.id}`);
+    try {
+      const { committee: created } = await api.createCommittee(payload);
+      await refreshCommittees();
+      setCommitteeName("");
+      setMembers([]);
+      setEditingId(null);
+      navigate(`/committees/${created._id || created.id}`);
+    } catch (err) {
+      alert(err.message || "Unable to create committee.");
+    }
   }
 
   return (
@@ -200,9 +198,9 @@ export default function CommitteeCreate() {
 
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <section className="card border border-cream/70 bg-white/90 p-6">
-              <div>
-                <label htmlFor="committeeName" className="block text-sm font-semibold text-wine">
-                  Committee name
+          <div>
+            <label htmlFor="committeeName" className="block text-sm font-semibold text-wine">
+              Committee name
                   <input
                     id="committeeName"
                     type="text"
@@ -257,6 +255,7 @@ export default function CommitteeCreate() {
 
 function MemberForm({ initial, onAdd, onSave, onCancel }) {
   const [name, setName] = useState(initial?.name || "");
+  const [email, setEmail] = useState(initial?.email || "");
   const [role, setRole] = useState(initial?.role || "");
   const [permissions, setPermissions] = useState(
     initial?.permissions?.length ? [...initial.permissions] : [...defaultPermissions]
@@ -276,6 +275,7 @@ function MemberForm({ initial, onAdd, onSave, onCancel }) {
     const nextMember = {
       id: initial?.id,
       name,
+      email: email?.trim(),
       role,
       permissions: [...permissions],
     };
@@ -283,6 +283,7 @@ function MemberForm({ initial, onAdd, onSave, onCancel }) {
     else {
       onAdd(nextMember);
       setName("");
+      setEmail("");
       setRole("");
       setPermissions([...defaultPermissions]);
     }
@@ -300,7 +301,18 @@ function MemberForm({ initial, onAdd, onSave, onCancel }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Member name"
-            required
+          />
+        </label>
+
+        <label className="block text-sm font-semibold text-wine" htmlFor="member-email">
+          Email
+          <input
+            id="member-email"
+            type="email"
+            className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="member@example.com"
           />
         </label>
 
@@ -311,7 +323,6 @@ function MemberForm({ initial, onAdd, onSave, onCancel }) {
             className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-base text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            required
           >
             <option value="" disabled>
               Select a role
@@ -391,6 +402,9 @@ function MembersTable({ members, onEdit, onRemove }) {
         >
           <div>
             <p className="text-base font-semibold text-wine">{member.name}</p>
+            {member.email && (
+              <p className="text-xs text-text/60">{member.email}</p>
+            )}
             <p className="text-xs uppercase tracking-wide text-text/50">
               Role • {cap(member.role)}
             </p>

@@ -3,9 +3,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function CommitteesList() {
-  const { appData, logout } = useAuth();
+  const { appData, logout, loading } = useAuth();
   const committees = appData.committees || [];
   const currentUser = appData.auth?.currentUser;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream via-peach to-sand p-8 text-center text-wine">
+        Loading your committees...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream via-peach to-sand">
@@ -38,16 +46,18 @@ export default function CommitteesList() {
               No committees yet. Create one to get started.
             </p>
           ) : (
-            committees.map((committee) => (
+            committees.map((committee) => {
+              const committeeId = committee._id || committee.id;
+              return (
               <Link
-                key={committee.id}
-                to={`/committees/${committee.id}`}
+                key={committeeId}
+                to={`/committees/${committeeId}`}
                 className="card flex h-full flex-col gap-4 border border-wine/10 bg-white/85 p-6 transition hover:-translate-y-1 hover:shadow-card"
               >
                 <div>
                   <h2 className="text-xl font-semibold text-wine">{committee.name}</h2>
                   <p className="mt-1 text-sm text-text/70">
-                    {committee.members?.length || 0} members • {committee.motions?.length || 0} motions
+                    {committee.members?.length || 0} members
                   </p>
                 </div>
                 <div className="mt-auto flex items-center gap-2 text-sm text-wine">
@@ -55,7 +65,8 @@ export default function CommitteesList() {
                   <span aria-hidden className="translate-y-[1px]">→</span>
                 </div>
               </Link>
-            ))
+            );
+            })
           )}
         </section>
       </div>

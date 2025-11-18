@@ -9,11 +9,11 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
     setError("");
     try {
-      login(email.trim(), password.trim());
+      await login(email.trim(), password.trim());
       navigate("/committees");
     } catch (err) {
       setError(err.message);
