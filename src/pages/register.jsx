@@ -10,11 +10,11 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
     setError("");
     try {
-      register(name.trim(), email.trim(), password.trim());
+      await register(name.trim(), email.trim(), password.trim());
       navigate("/committees");
     } catch (err) {
       setError(err.message);
