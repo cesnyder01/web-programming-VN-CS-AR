@@ -35,7 +35,7 @@ app.use((err, req, res, next) => {
 async function start() {
   await connectDB();
   app.listen(config.port, () => {
-    console.log(Server running on port );
+    console.log("Server running on port");
   });
 }
 
