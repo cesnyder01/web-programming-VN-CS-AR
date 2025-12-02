@@ -2,3 +2,6 @@ node_modules
 cookies.txt
 .env
 server/.env
+
+# Local Netlify folder
+.netlify
