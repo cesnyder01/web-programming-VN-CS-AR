@@ -1,40 +1,7 @@
 # RONR Platform (React SPA)
 
-Authors: VN, AR, CS  
+Authors: Vedha Navudu, Alice Roberts, Cora Snyder 
 Live preview: https://rulesoforder.netlify.app/
-
-## Getting Started
-
-1. Install dependencies (Node 18+)
-   ```bash
-   npm install
-   ```
-2. Start Vite dev server
-   ```bash
-   npm run dev
-   ```
-3. Open the printed local URL (e.g. http://localhost:5173)
-4. (Optional) Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` if your backend runs somewhere other than `http://localhost:5050/api`.
-
-### Backend (Express / MongoDB)
-
-1. Install API dependencies
-   ```bash
-   cd server
-   npm install
-   ```
-2. Copy the environment template and fill in credentials
-   ```bash
-   cp .env.example .env
-   ```
-   - `MONGO_URI`: MongoDB Atlas connection string
-   - `JWT_SECRET`: random string for signing auth tokens
-   - `FRONTEND_URL`: comma-separated list of allowed origins (e.g. `http://localhost:5173`)
-3. Start the API
-   ```bash
-   npm run dev
-   ```
-4. The API listens on `http://localhost:5000` by default (configurable via `PORT` in `.env`). The React app will begin integrating with these endpoints next.
 
 ## App Structure
 
