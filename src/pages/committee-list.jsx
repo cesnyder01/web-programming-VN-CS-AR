@@ -1,11 +1,37 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { api } from "../utils/api.js";
 
 export default function CommitteesList() {
   const { appData, logout, loading } = useAuth();
   const committees = appData.committees || [];
   const currentUser = appData.auth?.currentUser;
+
+  function isOwner(committee) {
+    if (!committee || !currentUser) return false;
+    const normalizedEmail = currentUser.email?.toLowerCase?.();
+    return (committee.members || []).some((member) => {
+      if (!member) return false;
+      if (member.role !== "owner") return false;
+      if (member.user && String(member.user) === String(currentUser.id)) return true;
+      if (member.userId && String(member.userId) === String(currentUser.id)) return true;
+      if (normalizedEmail && member.email && member.email.toLowerCase() === normalizedEmail) return true;
+      return false;
+    });
+  }
+
+  async function handleDelete(committee) {
+    if (!isOwner(committee)) return;
+    const confirmed = window.confirm("Are you sure you want to delete this committee? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await api.deleteCommittee(committee._id || committee.id);
+      window.location.reload();
+    } catch (err) {
+      alert(err.message || "Unable to delete committee.");
+    }
+  }
 
   if (loading) {
     return (
@@ -52,23 +78,31 @@ export default function CommitteesList() {
             committees.map((committee) => {
               const committeeId = committee._id || committee.id;
               return (
-              <Link
-                key={committeeId}
-                to={`/committees/${committeeId}`}
-                className="card flex h-full flex-col gap-4 border border-wine/10 bg-white/85 p-6 transition hover:-translate-y-1 hover:shadow-card"
-              >
-                <div>
-                  <h2 className="text-xl font-semibold text-wine">{committee.name}</h2>
-                  <p className="mt-1 text-sm text-text/70">
-                    {committee.members?.length || 0} members
-                  </p>
+                <div
+                  key={committeeId}
+                  className="card flex h-full flex-col gap-4 border border-wine/10 bg-white/85 p-6 transition hover:-translate-y-1 hover:shadow-card"
+                >
+                  <Link to={`/committees/${committeeId}`} className="flex flex-col gap-2">
+                    <div>
+                      <h2 className="text-xl font-semibold text-wine">{committee.name}</h2>
+                      <p className="mt-1 text-sm text-text/70">{committee.members?.length || 0} members</p>
+                    </div>
+                    <div className="mt-auto flex items-center gap-2 text-sm text-wine">
+                      <span className="font-semibold">View committee</span>
+                      <span aria-hidden className="translate-y-[1px]">→</span>
+                    </div>
+                  </Link>
+                  {isOwner(committee) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(committee)}
+                      className="inline-flex w-full justify-center rounded-full border border-rose/40 bg-rose/20 px-4 py-2 text-sm font-semibold text-rose transition hover:bg-rose/30"
+                    >
+                      Delete committee
+                    </button>
+                  )}
                 </div>
-                <div className="mt-auto flex items-center gap-2 text-sm text-wine">
-                  <span className="font-semibold">View committee</span>
-                  <span aria-hidden className="translate-y-[1px]">→</span>
-                </div>
-              </Link>
-            );
+              );
             })
           )}
         </section>

@@ -1,11 +1,27 @@
 const API_BASE_URL = "/api"; // Updated to use relative paths for Netlify serverless functions
+const TOKEN_KEY = "ronr_token";
+
+export function setAuthToken(token) {
+  if (!token) return;
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+function getAuthToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
 
 async function request(path, options = {}) {
+  const token = getAuthToken();
   const finalOptions = {
     credentials: "include",
     ...options,
     headers: {
       ...(options.body && !options.headers?.["Content-Type"] ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   };
@@ -100,5 +116,9 @@ export const api = {
     request(`/committees/motions/${motionId}/overturn`, {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+  deleteCommittee: (committeeId) =>
+    request(`/committees/${committeeId}`, {
+      method: "DELETE",
     }),
 };

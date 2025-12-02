@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "../utils/api.js";
+import { api, clearAuthToken, setAuthToken } from "../utils/api.js";
 
 const AuthContext = createContext(null);
 
@@ -48,7 +48,8 @@ export function AuthProvider({ children }) {
   }
 
   const login = async (email, password) => {
-    const { user } = await api.login({ email, password });
+    const { user, token } = await api.login({ email, password });
+    setAuthToken(token);
     setAppData((prev) => ({
       ...prev,
       auth: { isLoggedIn: true, currentUser: user },
@@ -58,7 +59,8 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
-    const { user } = await api.register({ name, email, password });
+    const { user, token } = await api.register({ name, email, password });
+    setAuthToken(token);
     setAppData({
       auth: { isLoggedIn: true, currentUser: user },
       committees: [],
@@ -72,6 +74,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // ignore
     }
+    clearAuthToken();
     setAppData(initialState);
   };
 

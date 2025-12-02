@@ -62,7 +62,7 @@ export default function CommitteeDetail() {
     [motionsSource]
   );
   const rootMotions = useMemo(
-    () => sortedMotions.filter((motion) => !motion.parentMotionId),
+    () => sortedMotions.filter((motion) => !motion.parentMotionId && !motion.decisionRecord),
     [sortedMotions]
   );
   const decidedMotions = useMemo(
@@ -1268,7 +1268,7 @@ export default function CommitteeDetail() {
             <ul className="mt-6 space-y-4">
               {decidedMotions.map((motion) => (
                 <li
-                  key={`decision-${motionId}`}
+                  key={`decision-${motion._id || motion.id}`}
                   className="rounded-2xl border border-cream/70 bg-white/85 p-5 text-sm text-text/75"
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1306,7 +1306,7 @@ export default function CommitteeDetail() {
                   )}
                   {sortedMotions.some(
                     (child) =>
-                      String(child.parentMotionId) === String(motionId) &&
+                      String(child.parentMotionId) === String(motion._id || motion.id) &&
                       child.variantOf === "overturn"
                   ) && (
                     <p className="mt-3 text-xs text-text/55">
