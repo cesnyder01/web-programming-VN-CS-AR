@@ -127,6 +127,97 @@ function serializeMotion(motion) {
   };
 }
 
+async function syncUserName(user) {
+  const userId = user._id;
+  const email = (user.email || "").toLowerCase();
+  const name = user.name;
+
+  const committees = await Committee.find({
+    $or: [
+      { "members.user": userId },
+      { "members.email": email },
+      { "handRaises.user": userId },
+      { "handRaises.createdByEmail": email },
+    ],
+  });
+
+  for (const committee of committees) {
+    let changed = false;
+
+    (committee.members || []).forEach((member) => {
+      const matchesUser =
+        (member.user && String(member.user) === String(userId)) ||
+        (member.email && member.email.toLowerCase() === email);
+      if (matchesUser && member.name !== name) {
+        member.name = name;
+        changed = true;
+      }
+    });
+
+    (committee.handRaises || []).forEach((entry) => {
+      const matchesUser =
+        (entry.user && String(entry.user) === String(userId)) ||
+        (entry.createdByEmail && entry.createdByEmail.toLowerCase() === email);
+      if (matchesUser && entry.createdByName !== name) {
+        entry.createdByName = name;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      await committee.save();
+    }
+  }
+
+  const motions = await Motion.find({
+    $or: [
+      { createdBy: userId },
+      { "discussion.createdBy": userId },
+      { "votes.createdBy": userId },
+      { "decisionRecord.recordedBy": userId },
+    ],
+  });
+
+  for (const motion of motions) {
+    let changed = false;
+
+    if (motion.createdBy && String(motion.createdBy) === String(userId)) {
+      if (motion.createdByName !== name) {
+        motion.createdByName = name;
+        changed = true;
+      }
+    }
+
+    (motion.discussion || []).forEach((entry) => {
+      if (entry.createdBy && String(entry.createdBy) === String(userId) && entry.createdByName !== name) {
+        entry.createdByName = name;
+        changed = true;
+      }
+    });
+
+    (motion.votes || []).forEach((vote) => {
+      if (vote.createdBy && String(vote.createdBy) === String(userId) && vote.createdByName !== name) {
+        vote.createdByName = name;
+        changed = true;
+      }
+    });
+
+    if (
+      motion.decisionRecord &&
+      motion.decisionRecord.recordedBy &&
+      String(motion.decisionRecord.recordedBy) === String(userId) &&
+      motion.decisionRecord.recordedByName !== name
+    ) {
+      motion.decisionRecord.recordedByName = name;
+      changed = true;
+    }
+
+    if (changed) {
+      await motion.save();
+    }
+  }
+}
+
 export async function handler(event) {
   const method = event.httpMethod;
   const corsHeaders = buildCorsHeaders(event);
@@ -195,6 +286,19 @@ export async function handler(event) {
     if (!user) {
       return json(200, { user: null }, corsHeaders);
     }
+    return json(200, { user: user.toSafeObject() }, corsHeaders);
+  }
+
+  if (path === "/api/auth/me" && method === "PATCH") {
+    const authResp = requireAuth(user, corsHeaders);
+    if (authResp) return authResp;
+    const name = (body.name || "").trim();
+    if (!name) {
+      return json(400, { message: "Name is required." }, corsHeaders);
+    }
+    user.name = name;
+    await user.save();
+    await syncUserName(user);
     return json(200, { user: user.toSafeObject() }, corsHeaders);
   }
 

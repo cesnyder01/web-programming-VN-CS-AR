@@ -594,7 +594,7 @@ export default function CommitteeDetail() {
                 disabled={!canEditSettings}
                 onChange={(e) => handleSettingsChange("recordNamesInVotes", e.target.checked)}
               />
-              <span>Record names during votes</span>
+              <span>Show voter names in results (toggle before voting)</span>
             </label>
             <label className="flex items-start gap-3 text-sm font-semibold text-wine">
               <input
@@ -1406,6 +1406,11 @@ export default function CommitteeDetail() {
             </div>
           ))}
         </div>
+        {!listNames && (
+          <p className="mt-3 text-xs text-text/60">
+            Votes are anonymous; voter names are hidden per chair setting.
+          </p>
+        )}
         {listNames && votes.length > 0 && (
           <div className="mt-4 rounded-2xl border border-cream/60 bg-peach/25 p-3 text-sm text-text/75">
             <p className="font-semibold text-wine">Recorded votes</p>

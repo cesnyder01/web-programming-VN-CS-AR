@@ -14,12 +14,16 @@
         "npm:@netlify/functions@^5.1.0",
         "npm:@vitejs/plugin-react@^4.3.1",
         "npm:autoprefixer@^10.4.21",
+        "npm:bcryptjs@^3.0.3",
+        "npm:dotenv@^17.2.3",
+        "npm:jsonwebtoken@^9.0.2",
+        "npm:mongoose@9",
         "npm:postcss@^8.5.6",
         "npm:react-dom@^18.3.1",
         "npm:react-router-dom@^6.26.2",
         "npm:react@^18.3.1",
         "npm:tailwindcss@^3.4.13",
-        "npm:vite@^5.4.8"
+        "npm:vite@^7.2.6"
       ]
     }
   }
