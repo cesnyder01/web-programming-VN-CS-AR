@@ -44,6 +44,11 @@ export const api = {
       method: "POST",
     }),
   currentUser: () => request("/auth/me"),
+  updateProfile: (payload) =>
+    request("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   listCommittees: () => request("/committees"),
   createCommittee: (payload) =>
     request("/committees", {

@@ -75,6 +75,16 @@ export function AuthProvider({ children }) {
     setAppData(initialState);
   };
 
+  const updateProfile = async (payload) => {
+    const { user } = await api.updateProfile(payload);
+    setAppData((prev) => ({
+      ...prev,
+      auth: { ...prev.auth, currentUser: user },
+    }));
+    await refreshCommittees();
+    return user;
+  };
+
   const value = useMemo(
     () => ({
       appData,
@@ -82,6 +92,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       refreshCommittees,
+      updateProfile,
       loading,
       error,
       setAppData,

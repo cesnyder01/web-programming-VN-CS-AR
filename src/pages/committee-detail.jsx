@@ -529,12 +529,20 @@ export default function CommitteeDetail() {
     <div className="min-h-screen bg-gradient-to-br from-cream via-peach to-sand">
       <div className="mx-auto max-w-6xl px-6 py-10 md:px-10">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <Link
-            to="/committees"
-            className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-wine shadow-soft transition hover:-translate-y-0.5"
-          >
-            ← Back to committees
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              to="/committees"
+              className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-wine shadow-soft transition hover:-translate-y-0.5"
+            >
+              Back to committees
+            </Link>
+            <Link
+              to="/profile"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-wine/20 bg-white/70 px-4 py-2 text-sm font-semibold text-wine shadow-soft transition hover:-translate-y-0.5"
+            >
+              Profile
+            </Link>
+          </div>
           <div className="card flex-1 border border-cream/80 bg-white/85 p-6 text-wine">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>

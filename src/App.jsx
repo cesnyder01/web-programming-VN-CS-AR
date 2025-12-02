@@ -7,6 +7,7 @@ import CommitteesList from "./pages/committee-list.jsx";
 import CommitteeDetail from "./pages/committee-detail.jsx";
 import CommitteeCreate from "./pages/committee-create.jsx";
 import Landing from "./pages/landing.jsx";
+import Profile from "./pages/profile.jsx";
 
 function RequireAuth({ children }) {
   const { appData } = useAuth();
@@ -36,6 +37,14 @@ export default function App() {
           <RedirectIfAuthed>
             <Register />
           </RedirectIfAuthed>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <RequireAuth>
+            <Profile />
+          </RequireAuth>
         }
       />
       <Route path="/committees" element={<RequireAuth><CommitteesList /></RequireAuth>} />
