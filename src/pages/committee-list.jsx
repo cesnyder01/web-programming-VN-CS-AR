@@ -30,6 +30,9 @@ export default function CommitteesList() {
             <Link to="/committees/new" className="btn-primary">
               New Committee
             </Link>
+            <Link to="/profile" className="btn-secondary">
+              Profile
+            </Link>
             <button
               onClick={logout}
               className="btn-secondary"
