@@ -10,17 +10,41 @@ const mainHandler = async (event) => {
   if (path.endsWith("/register") && httpMethod === "POST") {
     const { name, email, password } = reqBody;
     if (!name || !email || !password) {
-      return { statusCode: 400, body: JSON.stringify({ message: "Name, email, and password are required." }) };
+      return {
+        statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+        body: JSON.stringify({ message: "Name, email, and password are required." }),
+      };
     }
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
-      return { statusCode: 409, body: JSON.stringify({ message: "Email already registered." }) };
+      return {
+        statusCode: 409,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+        body: JSON.stringify({ message: "Email already registered." }),
+      };
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email: email.toLowerCase(), passwordHash });
 
     const token = signToken(user._id);
-    return { statusCode: 201, body: JSON.stringify({ user: user.toSafeObject(), token }) };
+    return {
+      statusCode: 201,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+      body: JSON.stringify({ user: user.toSafeObject(), token }),
+    };
   }
 
   if (path.endsWith("/login") && httpMethod === "POST") {

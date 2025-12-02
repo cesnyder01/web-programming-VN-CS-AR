@@ -3,10 +3,10 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const config = {
-  port: process.env.PORT || 5000,
-  mongoUri: process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ronr",
-  jwtSecret: process.env.JWT_SECRET || "development-secret",
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
+  port: process.env.PORT || 5050,
+  mongoUri: process.env.MONGO_URI || "mongodb+srv://aliceroberts:Alikinz-13@cluster0.ygllgdj.mongodb.net/ronr?retryWrites=true&w=majority",
+  jwtSecret: process.env.JWT_SECRET || "change-me-please",
+  frontendUrl: process.env.FRONTEND_URL || "https://rulesoforder.netlify.app/",
 };
 
 module.exports = config;
