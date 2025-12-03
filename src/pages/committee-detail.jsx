@@ -31,6 +31,8 @@ export default function CommitteeDetail() {
   const [decisionDrafts, setDecisionDrafts] = useState({});
   const [subMotionDrafts, setSubMotionDrafts] = useState({});
   const [overturnDrafts, setOverturnDrafts] = useState({});
+  const [showChairPanel, setShowChairPanel] = useState(false);
+  const [expandedMotions, setExpandedMotions] = useState({});
 
   const fetchCommittee = useCallback(async () => {
     if (!id) return;
@@ -126,6 +128,11 @@ export default function CommitteeDetail() {
 
   useEffect(() => {
     setHandRaiseDraft({ stance: "pro", note: "" });
+  }, [id]);
+
+  useEffect(() => {
+    setShowChairPanel(false);
+    setExpandedMotions({});
   }, [id]);
 
   if (loading) {
@@ -243,6 +250,14 @@ export default function CommitteeDetail() {
     } catch (err) {
       setError(err.message || "Unable to update queue.");
     }
+  }
+
+  function toggleMotionExpansion(motionId) {
+    if (!motionId) return;
+    setExpandedMotions((prev) => ({
+      ...prev,
+      [motionId]: !prev[motionId],
+    }));
   }
 
   async function createMotion(e) {
@@ -549,11 +564,11 @@ export default function CommitteeDetail() {
                 <span className="badge">Committee</span>
                 <h1 className="mt-2 text-3xl font-bold">{committee.name}</h1>
               </div>
-              <div className="flex gap-4 text-sm text-wine/80">
-                <div className="rounded-2xl border border-cream/60 bg-white/70 px-4 py-2 text-center">
-                  <p className="text-xs uppercase tracking-wide text-wine/60">Members</p>
-                  <p className="text-lg font-semibold text-wine">{committee.members?.length || 0}</p>
-                </div>
+          <div className="flex gap-4 text-sm text-wine/80">
+            <div className="rounded-2xl border border-cream/60 bg-white/70 px-4 py-2 text-center">
+              <p className="text-xs uppercase tracking-wide text-wine/60">Members</p>
+              <p className="text-lg font-semibold text-wine">{committee.members?.length || 0}</p>
+            </div>
                 <div className="rounded-2xl border border-cream/60 bg-white/70 px-4 py-2 text-center">
                   <p className="text-xs uppercase tracking-wide text-wine/60">Motions</p>
                   <p className="text-lg font-semibold text-wine">{committee.motions?.length || 0}</p>
@@ -563,71 +578,97 @@ export default function CommitteeDetail() {
           </div>
         </div>
 
-        <section className="card mt-10 border border-cream/70 bg-white/90 p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-wine">Chair Control Panel</h2>
-              <p className="text-sm text-text/65">
-                Toggle offline options, speaker thresholds, and vote recording preferences.
-              </p>
-            </div>
-            <span className="rounded-full bg-rose/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
-              {canEditSettings ? "Editable" : "View only"}
-            </span>
-          </div>
-          <form onSubmit={saveSettings} className="mt-6 grid gap-6 md:grid-cols-2">
-            <label className="flex items-start gap-3 text-sm font-semibold text-wine">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
-                checked={settingsForm.offlineMode}
-                disabled={!canEditSettings}
-                onChange={(e) => handleSettingsChange("offlineMode", e.target.checked)}
-              />
-              <span>Offline Mode • allow asynchronous participation</span>
-            </label>
-            <label className="flex items-start gap-3 text-sm font-semibold text-wine">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
-                checked={settingsForm.recordNamesInVotes}
-                disabled={!canEditSettings}
-                onChange={(e) => handleSettingsChange("recordNamesInVotes", e.target.checked)}
-              />
-              <span>Show voter names in results (toggle before voting)</span>
-            </label>
-            <label className="flex items-start gap-3 text-sm font-semibold text-wine">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
-                checked={settingsForm.allowSpecialMotions}
-                disabled={!canEditSettings}
-                onChange={(e) => handleSettingsChange("allowSpecialMotions", e.target.checked)}
-              />
-              <span>Allow special motions (no discussion)</span>
-            </label>
-            <label className="flex flex-col text-sm font-semibold text-wine">
-              Minimum speakers before vote
-              <input
-                type="number"
-                min="0"
-                className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                value={settingsForm.minSpeakersBeforeVote}
-                disabled={!canEditSettings}
-                onChange={(e) => handleSettingsChange("minSpeakersBeforeVote", e.target.value)}
-              />
-            </label>
-            {canEditSettings ? (
-              <button type="submit" className="btn-primary mt-2 w-full justify-center md:w-auto">
-                Save chair settings
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-text/65">
+            Chair controls are tucked away to keep the workspace clear.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowChairPanel(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-wine/30 bg-white/80 px-4 py-2 text-sm font-semibold text-wine shadow-soft transition hover:-translate-y-0.5 hover:shadow-card"
+          >
+            Open chair panel
+            <span aria-hidden>↗</span>
+          </button>
+        </div>
+
+        {showChairPanel && (
+          <div className="fixed inset-0 z-30 flex items-start justify-center bg-black/25 px-4 py-8 backdrop-blur-sm">
+            <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-cream/80 bg-white/95 p-6 shadow-card">
+              <button
+                type="button"
+                onClick={() => setShowChairPanel(false)}
+                className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-cream/80 text-lg font-semibold text-wine transition hover:bg-rose/10"
+                aria-label="Close chair panel"
+              >
+                ×
               </button>
-            ) : (
-              <p className="mt-2 text-xs text-text/60 md:col-span-2">
-                Settings are controlled by the committee owner or chair.
-              </p>
-            )}
-          </form>
-        </section>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-wine">Chair Control Panel</h2>
+                  <p className="text-sm text-text/65">
+                    Toggle offline options, speaker thresholds, and vote recording preferences.
+                  </p>
+                </div>
+                <span className="rounded-full bg-rose/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
+                  {canEditSettings ? "Editable" : "View only"}
+                </span>
+              </div>
+              <form onSubmit={saveSettings} className="mt-6 grid gap-6 md:grid-cols-2">
+                <label className="flex items-start gap-3 text-sm font-semibold text-wine">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
+                    checked={settingsForm.offlineMode}
+                    disabled={!canEditSettings}
+                    onChange={(e) => handleSettingsChange("offlineMode", e.target.checked)}
+                  />
+                  <span>Offline Mode • allow asynchronous participation</span>
+                </label>
+                <label className="flex items-start gap-3 text-sm font-semibold text-wine">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
+                    checked={settingsForm.recordNamesInVotes}
+                    disabled={!canEditSettings}
+                    onChange={(e) => handleSettingsChange("recordNamesInVotes", e.target.checked)}
+                  />
+                  <span>Show voter names in results (toggle before voting)</span>
+                </label>
+                <label className="flex items-start gap-3 text-sm font-semibold text-wine">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-cream/80 text-wine focus:ring-rose/40"
+                    checked={settingsForm.allowSpecialMotions}
+                    disabled={!canEditSettings}
+                    onChange={(e) => handleSettingsChange("allowSpecialMotions", e.target.checked)}
+                  />
+                  <span>Allow special motions (no discussion)</span>
+                </label>
+                <label className="flex flex-col text-sm font-semibold text-wine">
+                  Minimum speakers before vote
+                  <input
+                    type="number"
+                    min="0"
+                    className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                    value={settingsForm.minSpeakersBeforeVote}
+                    disabled={!canEditSettings}
+                    onChange={(e) => handleSettingsChange("minSpeakersBeforeVote", e.target.value)}
+                  />
+                </label>
+                {canEditSettings ? (
+                  <button type="submit" className="btn-primary mt-2 w-full justify-center md:w-auto">
+                    Save chair settings
+                  </button>
+                ) : (
+                  <p className="mt-2 text-xs text-text/60 md:col-span-2">
+                    Settings are controlled by the committee owner or chair.
+                  </p>
+                )}
+              </form>
+            </div>
+          </div>
+        )}
 
         <section className="card mt-8 border border-cream/70 bg-white/90 p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -865,6 +906,9 @@ export default function CommitteeDetail() {
                 const childMotions = sortedMotions.filter(
                   (candidate) => String(candidate.parentMotionId) === String(motionId)
                 );
+                const isExpanded = Boolean(expandedMotions[motionId]);
+                const discussionCount = (motion.discussion || []).length;
+                const voteCount = (motion.votes || []).length;
                 return (
                   <li
                     key={motionId}
@@ -883,371 +927,391 @@ export default function CommitteeDetail() {
                           )}
                         </p>
                       </div>
-                      <span className="inline-flex items-center rounded-full bg-rose/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
-                        {formatStatus(motion.status || "pending")}
-                      </span>
-                    </div>
-                    {motion.description && (
-                      <p className="mt-3 text-sm leading-relaxed text-text/75">{motion.description}</p>
-                    )}
-                    <p className="mt-4 text-xs text-text/60">
-                      Proposed by {motion.createdByName || "Member"} • {formatTimestamp(motion.createdAt)}
-                    </p>
-
-                    <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-wine">Discussion</p>
-                        <span className="text-xs text-text/60">
-                          {(motion.discussion || []).length} replies
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center rounded-full bg-rose/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
+                          {formatStatus(motion.status || "pending")}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleMotionExpansion(motionId)}
+                          aria-expanded={isExpanded}
+                          className="inline-flex items-center rounded-full border border-wine/30 bg-white/80 px-3 py-1 text-xs font-semibold text-wine transition hover:-translate-y-0.5 hover:shadow-soft"
+                        >
+                          {isExpanded ? "Collapse" : "Open motion"}
+                        </button>
                       </div>
-                      {motion.type === "special" ? (
-                        <p className="mt-4 text-sm text-text/65">
-                          This special motion does not require open discussion. Chairs will record the
-                          outcome directly.
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-text/75">
+                      {isExpanded
+                        ? motion.description || "No description provided."
+                        : motionPreviewText(motion)}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-text/60">
+                      <span>Discussion: {discussionCount}</span>
+                      <span>Votes: {voteCount}</span>
+                      <span>Linked: {childMotions.length}</span>
+                      <span>Updated {formatTimestamp(motion.updatedAt || motion.createdAt)}</span>
+                    </div>
+
+                    {isExpanded && (
+                      <>
+                        <p className="mt-3 text-xs text-text/60">
+                          Proposed by {motion.createdByName || "Member"} •{" "}
+                          {formatTimestamp(motion.createdAt)}
                         </p>
-                      ) : (
-                        <>
-                          <div className="mt-4 space-y-3">
-                            {(motion.discussion || []).length === 0 ? (
-                              <p className="text-sm text-text/65">
-                                No discussion yet. Be the first to weigh in with a pro, con, or neutral note.
-                              </p>
-                            ) : (
-                              (motion.discussion || []).map((entry) => (
-                                <article
-                                  key={entry.id}
-                                  className="rounded-2xl border border-cream/70 bg-white/90 p-3"
-                                >
-                                  <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="text-sm font-semibold text-wine">
-                                      {entry.createdByName || "Member"}
-                                    </p>
-                                    <span
-                                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${stanceChipClass(entry.stance)}`}
-                                    >
-                                      {formatStance(entry.stance)}
-                                    </span>
-                                  </div>
-                                  <p className="mt-2 text-sm text-text/75">{entry.content}</p>
-                                  <p className="mt-2 text-[11px] text-text/55">
-                                    {formatTimestamp(entry.createdAt)}
-                                  </p>
-                                </article>
-                              ))
-                            )}
+
+                        <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-wine">Discussion</p>
+                            <span className="text-xs text-text/60">{discussionCount} replies</span>
                           </div>
+                          {motion.type === "special" ? (
+                            <p className="mt-4 text-sm text-text/65">
+                              This special motion does not require open discussion. Chairs will record the
+                              outcome directly.
+                            </p>
+                          ) : (
+                            <>
+                              <div className="mt-4 space-y-3">
+                                {discussionCount === 0 ? (
+                                  <p className="text-sm text-text/65">
+                                    No discussion yet. Be the first to weigh in with a pro, con, or neutral note.
+                                  </p>
+                                ) : (
+                                  (motion.discussion || []).map((entry) => (
+                                    <article
+                                      key={entry.id}
+                                      className="rounded-2xl border border-cream/70 bg-white/90 p-3"
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold text-wine">
+                                          {entry.createdByName || "Member"}
+                                        </p>
+                                        <span
+                                          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${stanceChipClass(entry.stance)}`}
+                                        >
+                                          {formatStance(entry.stance)}
+                                        </span>
+                                      </div>
+                                      <p className="mt-2 text-sm text-text/75">{entry.content}</p>
+                                      <p className="mt-2 text-[11px] text-text/55">
+                                        {formatTimestamp(entry.createdAt)}
+                                      </p>
+                                    </article>
+                                  ))
+                                )}
+                              </div>
+                              <form
+                                className="mt-5 space-y-3"
+                                onSubmit={(event) => submitDiscussion(event, motionId)}
+                              >
+                                <label className="block text-xs font-semibold uppercase tracking-wide text-text/60">
+                                  Perspective
+                                  <select
+                                    className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                    value={discussionDraft.stance}
+                                    onChange={(e) =>
+                                      handleDiscussionDraftChange(motionId, "stance", e.target.value)
+                                    }
+                                  >
+                                    <option value="pro">Pro</option>
+                                    <option value="con">Con</option>
+                                    <option value="neutral">Neutral</option>
+                                  </select>
+                                </label>
+                                <label
+                                  className="block text-sm font-semibold text-wine"
+                                  htmlFor={`discussion-${motionId}`}
+                                >
+                                  Contribution
+                                  <textarea
+                                    id={`discussion-${motionId}`}
+                                    className="mt-2 min-h-[110px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                    placeholder="Share a perspective with context or references."
+                                    value={discussionDraft.message}
+                                    onChange={(e) =>
+                                      handleDiscussionDraftChange(motionId, "message", e.target.value)
+                                    }
+                                  />
+                                </label>
+                                <button type="submit" className="btn-secondary w-full justify-center">
+                                  Add reply
+                                </button>
+                              </form>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-wine">Voting</p>
+                            <span className="text-xs text-text/60">{voteCount} total</span>
+                          </div>
+                          {renderVoteSummary(motion)}
                           <form
-                            className="mt-5 space-y-3"
-                            onSubmit={(event) => submitDiscussion(event, motionId)}
+                            className="mt-4 space-y-3"
+                            onSubmit={(event) => submitVote(event, motionId, existingVote?.choice)}
                           >
-                            <label className="block text-xs font-semibold uppercase tracking-wide text-text/60">
-                              Perspective
+                            <label className="block text-sm font-semibold text-wine">
+                              Cast your vote
                               <select
                                 className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                                value={discussionDraft.stance}
-                                onChange={(e) =>
-                                  handleDiscussionDraftChange(motionId, "stance", e.target.value)
-                                }
+                                value={currentChoice}
+                                onChange={(e) => handleVoteDraftChange(motionId, e.target.value)}
                               >
-                                <option value="pro">Pro</option>
-                                <option value="con">Con</option>
-                                <option value="neutral">Neutral</option>
+                                <option value="support">In favor</option>
+                                <option value="against">Opposed</option>
+                                <option value="abstain">Abstain</option>
                               </select>
                             </label>
-                            <label
-                              className="block text-sm font-semibold text-wine"
-                              htmlFor={`discussion-${motionId}`}
-                            >
-                              Contribution
-                              <textarea
-                                id={`discussion-${motionId}`}
-                                className="mt-2 min-h-[110px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                                placeholder="Share a perspective with context or references."
-                                value={discussionDraft.message}
-                                onChange={(e) =>
-                                  handleDiscussionDraftChange(motionId, "message", e.target.value)
-                                }
-                              />
-                            </label>
-                            <button type="submit" className="btn-secondary w-full justify-center">
-                              Add reply
+                            <button type="submit" className="btn-primary w-full justify-center">
+                              {existingVote ? "Update vote" : "Submit vote"}
                             </button>
+                            {existingVote && (
+                              <p className="text-xs text-text/60">
+                                You last voted {formatVoteChoice(existingVote.choice)} on{" "}
+                                {formatTimestamp(existingVote.createdAt)}.
+                              </p>
+                            )}
                           </form>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-wine">Voting</p>
-                        <span className="text-xs text-text/60">
-                          {(motion.votes || []).length} total
-                        </span>
-                      </div>
-                      {renderVoteSummary(motion)}
-                      <form
-                        className="mt-4 space-y-3"
-                        onSubmit={(event) => submitVote(event, motionId, existingVote?.choice)}
-                      >
-                        <label className="block text-sm font-semibold text-wine">
-                          Cast your vote
-                          <select
-                            className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                            value={currentChoice}
-                            onChange={(e) => handleVoteDraftChange(motionId, e.target.value)}
-                          >
-                            <option value="support">In favor</option>
-                            <option value="against">Opposed</option>
-                            <option value="abstain">Abstain</option>
-                          </select>
-                        </label>
-                        <button type="submit" className="btn-primary w-full justify-center">
-                          {existingVote ? "Update vote" : "Submit vote"}
-                        </button>
-                        {existingVote && (
-                          <p className="text-xs text-text/60">
-                            You last voted {formatVoteChoice(existingVote.choice)} on{" "}
-                            {formatTimestamp(existingVote.createdAt)}.
-                          </p>
-                        )}
-                      </form>
-                    </div>
-
-                    <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-wine">Decision record</p>
-                        {decisionRecord && (
-                          <span className="text-xs text-text/60">
-                            Updated {formatTimestamp(decisionRecord.recordedAt)}
-                          </span>
-                        )}
-                      </div>
-                      {decisionRecord ? (
-                        <div className="mt-4 space-y-3 text-sm text-text/75">
-                          {decisionRecord.summary && (
-                            <p>
-                              <span className="font-semibold text-wine">Summary:</span>{" "}
-                              {decisionRecord.summary}
-                            </p>
-                          )}
-                          {decisionRecord.pros && (
-                            <p>
-                              <span className="font-semibold text-wine">Pros:</span>{" "}
-                              {decisionRecord.pros}
-                            </p>
-                          )}
-                          {decisionRecord.cons && (
-                            <p>
-                              <span className="font-semibold text-wine">Cons:</span>{" "}
-                              {decisionRecord.cons}
-                            </p>
-                          )}
-                          <p className="text-xs text-text/60">
-                            Recorded by {decisionRecord.recordedByName || "Chair"}
-                          </p>
                         </div>
-                      ) : (
-                        <p className="mt-4 text-sm text-text/65">
-                          No decision recorded yet. Chairs can summarize outcomes for future reference.
-                        </p>
-                      )}
 
-                      {canRecordDecision() ? (
-                        <form
-                          className="mt-5 space-y-4"
-                          onSubmit={(event) => submitDecisionRecord(event, motionId, decisionRecord)}
-                        >
-                          <label className="block text-sm font-semibold text-wine">
-                            Outcome
-                            <select
-                              className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              value={decisionDraft.outcome}
-                              onChange={(e) =>
-                                handleDecisionDraftChange(motionId, "outcome", e.target.value)
-                              }
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="passed">Passed</option>
-                              <option value="failed">Failed</option>
-                              <option value="postponed">Postponed</option>
-                            </select>
-                          </label>
-                          <label className="block text-sm font-semibold text-wine">
-                            Decision summary
-                            <textarea
-                              className="mt-2 min-h-[90px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              placeholder="Describe the rationale, amendments, or chair notes."
-                              value={decisionDraft.summary}
-                              onChange={(e) =>
-                                handleDecisionDraftChange(motionId, "summary", e.target.value)
-                              }
-                            />
-                          </label>
-                          <label className="block text-sm font-semibold text-wine">
-                            Pros captured
-                            <textarea
-                              className="mt-2 min-h-[70px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              placeholder="Highlight supporting arguments or benefits."
-                              value={decisionDraft.pros}
-                              onChange={(e) =>
-                                handleDecisionDraftChange(motionId, "pros", e.target.value)
-                              }
-                            />
-                          </label>
-                          <label className="block text-sm font-semibold text-wine">
-                            Cons captured
-                            <textarea
-                              className="mt-2 min-h-[70px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              placeholder="Document concerns, trade-offs, or objections."
-                              value={decisionDraft.cons}
-                              onChange={(e) =>
-                                handleDecisionDraftChange(motionId, "cons", e.target.value)
-                              }
-                            />
-                          </label>
-                          <button type="submit" className="btn-secondary w-full justify-center">
-                            {decisionRecord ? "Update decision record" : "Save decision record"}
-                          </button>
-                        </form>
-                      ) : (
-                        <p className="mt-4 text-xs text-text/60">
-                          Only the owner or chair can finalize motions.
-                        </p>
-                      )}
-                      {decisionOutcome === "passed" && (
-                        <div className="mt-6 rounded-2xl border border-cream/70 bg-white/80 p-4">
-                          <p className="text-sm font-semibold text-wine">Overturn this decision</p>
-                          <p className="text-xs text-text/60">
-                            Only members who voted in favor may request overturning the result.
-                          </p>
-                          {canRequestOverturn(motion) ? (
+                        <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-wine">Decision record</p>
+                            {decisionRecord && (
+                              <span className="text-xs text-text/60">
+                                Updated {formatTimestamp(decisionRecord.recordedAt)}
+                              </span>
+                            )}
+                          </div>
+                          {decisionRecord ? (
+                            <div className="mt-4 space-y-3 text-sm text-text/75">
+                              {decisionRecord.summary && (
+                                <p>
+                                  <span className="font-semibold text-wine">Summary:</span>{" "}
+                                  {decisionRecord.summary}
+                                </p>
+                              )}
+                              {decisionRecord.pros && (
+                                <p>
+                                  <span className="font-semibold text-wine">Pros:</span>{" "}
+                                  {decisionRecord.pros}
+                                </p>
+                              )}
+                              {decisionRecord.cons && (
+                                <p>
+                                  <span className="font-semibold text-wine">Cons:</span>{" "}
+                                  {decisionRecord.cons}
+                                </p>
+                              )}
+                              <p className="text-xs text-text/60">
+                                Recorded by {decisionRecord.recordedByName || "Chair"}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="mt-4 text-sm text-text/65">
+                              No decision recorded yet. Chairs can summarize outcomes for future reference.
+                            </p>
+                          )}
+
+                          {canRecordDecision() ? (
                             <form
-                              className="mt-4 space-y-3"
-                              onSubmit={(event) => submitOverturnRequest(event, motion)}
+                              className="mt-5 space-y-4"
+                              onSubmit={(event) => submitDecisionRecord(event, motionId, decisionRecord)}
                             >
                               <label className="block text-sm font-semibold text-wine">
-                                Request title
-                                <input
-                                  className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                                  placeholder={`Overturn: ${motion.title}`}
-                                  value={overturnDraft.title}
+                                Outcome
+                                <select
+                                  className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  value={decisionDraft.outcome}
                                   onChange={(e) =>
-                                    handleOverturnDraftChange(motionId, "title", e.target.value)
+                                    handleDecisionDraftChange(motionId, "outcome", e.target.value)
+                                  }
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="passed">Passed</option>
+                                  <option value="failed">Failed</option>
+                                  <option value="postponed">Postponed</option>
+                                </select>
+                              </label>
+                              <label className="block text-sm font-semibold text-wine">
+                                Decision summary
+                                <textarea
+                                  className="mt-2 min-h-[90px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  placeholder="Describe the rationale, amendments, or chair notes."
+                                  value={decisionDraft.summary}
+                                  onChange={(e) =>
+                                    handleDecisionDraftChange(motionId, "summary", e.target.value)
                                   }
                                 />
                               </label>
                               <label className="block text-sm font-semibold text-wine">
-                                Justification
+                                Pros captured
                                 <textarea
-                                  className="mt-2 min-h-[80px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                                  placeholder="Explain why the decision should be reconsidered."
-                                  value={overturnDraft.justification}
+                                  className="mt-2 min-h-[70px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  placeholder="Highlight supporting arguments or benefits."
+                                  value={decisionDraft.pros}
                                   onChange={(e) =>
-                                    handleOverturnDraftChange(motionId, "justification", e.target.value)
+                                    handleDecisionDraftChange(motionId, "pros", e.target.value)
+                                  }
+                                />
+                              </label>
+                              <label className="block text-sm font-semibold text-wine">
+                                Cons captured
+                                <textarea
+                                  className="mt-2 min-h-[70px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  placeholder="Document concerns, trade-offs, or objections."
+                                  value={decisionDraft.cons}
+                                  onChange={(e) =>
+                                    handleDecisionDraftChange(motionId, "cons", e.target.value)
+                                  }
+                                />
+                              </label>
+                              <button type="submit" className="btn-secondary w-full justify-center">
+                                {decisionRecord ? "Update decision record" : "Save decision record"}
+                              </button>
+                            </form>
+                          ) : (
+                            <p className="mt-4 text-xs text-text/60">
+                              Only the owner or chair can finalize motions.
+                            </p>
+                          )}
+                          {decisionOutcome === "passed" && (
+                            <div className="mt-6 rounded-2xl border border-cream/70 bg-white/80 p-4">
+                              <p className="text-sm font-semibold text-wine">Overturn this decision</p>
+                              <p className="text-xs text-text/60">
+                                Only members who voted in favor may request overturning the result.
+                              </p>
+                              {canRequestOverturn(motion) ? (
+                                <form
+                                  className="mt-4 space-y-3"
+                                  onSubmit={(event) => submitOverturnRequest(event, motion)}
+                                >
+                                  <label className="block text-sm font-semibold text-wine">
+                                    Request title
+                                    <input
+                                      className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                      placeholder={`Overturn: ${motion.title}`}
+                                      value={overturnDraft.title}
+                                      onChange={(e) =>
+                                        handleOverturnDraftChange(motionId, "title", e.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label className="block text-sm font-semibold text-wine">
+                                    Justification
+                                    <textarea
+                                      className="mt-2 min-h-[80px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                      placeholder="Explain why the decision should be reconsidered."
+                                      value={overturnDraft.justification}
+                                      onChange={(e) =>
+                                        handleOverturnDraftChange(motionId, "justification", e.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <button type="submit" className="btn-primary w-full justify-center">
+                                    Submit overturn request
+                                  </button>
+                                </form>
+                              ) : (
+                                <p className="mt-3 text-xs text-text/60">
+                                  You must have voted in favor to raise an overturn request.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-wine">Sub-motions & revisions</p>
+                            <span className="text-xs text-text/60">{childMotions.length} linked</span>
+                          </div>
+                          {childMotions.length === 0 ? (
+                            <p className="mt-3 text-sm text-text/65">
+                              None recorded yet. Use this area to propose revisions or postponements.
+                            </p>
+                          ) : (
+                            <ul className="mt-4 space-y-3 text-sm text-text/75">
+                              {childMotions.map((child) => (
+                                <li
+                                  key={child.id}
+                                  className="rounded-2xl border border-cream/70 bg-white/90 p-3"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                      <p className="font-semibold text-wine">{child.title}</p>
+                                      <p className="text-xs text-text/60">
+                                        {formatVariantLabel(child.variantOf || "revision")} •{" "}
+                                        {formatStatus(child.status || "pending")}
+                                      </p>
+                                    </div>
+                                    <span className="text-[11px] text-text/55">
+                                      {formatTimestamp(child.createdAt)}
+                                    </span>
+                                  </div>
+                                  {child.description && (
+                                    <p className="mt-2 text-sm text-text/70">{child.description}</p>
+                                  )}
+                                  {child.decisionRecord?.summary && (
+                                    <p className="mt-2 text-xs text-text/60">
+                                      Summary: {child.decisionRecord.summary}
+                                    </p>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {canPerform("createMotion") && (
+                            <form
+                              className="mt-5 space-y-4"
+                              onSubmit={(event) => submitSubMotion(event, motion)}
+                            >
+                              <label className="block text-sm font-semibold text-wine">
+                                Sub-motion type
+                                <select
+                                  className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  value={subMotionDraft.variant}
+                                  onChange={(e) =>
+                                    handleSubMotionDraftChange(motionId, "variant", e.target.value)
+                                  }
+                                >
+                                  <option value="revision">Revision</option>
+                                  <option value="amendment">Amendment</option>
+                                  <option value="postpone">Postpone</option>
+                                </select>
+                              </label>
+                              <label className="block text-sm font-semibold text-wine">
+                                Title
+                                <input
+                                  className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  placeholder="Summarize the revision or postponement"
+                                  value={subMotionDraft.title}
+                                  onChange={(e) =>
+                                    handleSubMotionDraftChange(motionId, "title", e.target.value)
+                                  }
+                                />
+                              </label>
+                              <label className="block text-sm font-semibold text-wine">
+                                Description
+                                <textarea
+                                  className="mt-2 min-h-[90px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
+                                  placeholder="Provide context or proposed changes (optional)"
+                                  value={subMotionDraft.description}
+                                  onChange={(e) =>
+                                    handleSubMotionDraftChange(motionId, "description", e.target.value)
                                   }
                                 />
                               </label>
                               <button type="submit" className="btn-primary w-full justify-center">
-                                Submit overturn request
+                                Add sub-motion
                               </button>
                             </form>
-                          ) : (
-                            <p className="mt-3 text-xs text-text/60">
-                              You must have voted in favor to raise an overturn request.
-                            </p>
                           )}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="mt-5 rounded-2xl border border-cream/70 bg-white/85 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-wine">Sub-motions & revisions</p>
-                        <span className="text-xs text-text/60">{childMotions.length} linked</span>
-                      </div>
-                      {childMotions.length === 0 ? (
-                        <p className="mt-3 text-sm text-text/65">
-                          None recorded yet. Use this area to propose revisions or postponements.
-                        </p>
-                      ) : (
-                        <ul className="mt-4 space-y-3 text-sm text-text/75">
-                          {childMotions.map((child) => (
-                            <li
-                              key={child.id}
-                              className="rounded-2xl border border-cream/70 bg-white/90 p-3"
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div>
-                                  <p className="font-semibold text-wine">{child.title}</p>
-                                  <p className="text-xs text-text/60">
-                                    {formatVariantLabel(child.variantOf || "revision")} •{" "}
-                                    {formatStatus(child.status || "pending")}
-                                  </p>
-                                </div>
-                                <span className="text-[11px] text-text/55">
-                                  {formatTimestamp(child.createdAt)}
-                                </span>
-                              </div>
-                              {child.description && (
-                                <p className="mt-2 text-sm text-text/70">{child.description}</p>
-                              )}
-                              {child.decisionRecord?.summary && (
-                                <p className="mt-2 text-xs text-text/60">
-                                  Summary: {child.decisionRecord.summary}
-                                </p>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {canPerform("createMotion") && (
-                        <form
-                          className="mt-5 space-y-4"
-                          onSubmit={(event) => submitSubMotion(event, motion)}
-                        >
-                          <label className="block text-sm font-semibold text-wine">
-                            Sub-motion type
-                            <select
-                              className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              value={subMotionDraft.variant}
-                              onChange={(e) =>
-                                handleSubMotionDraftChange(motionId, "variant", e.target.value)
-                              }
-                            >
-                              <option value="revision">Revision</option>
-                              <option value="amendment">Amendment</option>
-                              <option value="postpone">Postpone</option>
-                            </select>
-                          </label>
-                          <label className="block text-sm font-semibold text-wine">
-                            Title
-                            <input
-                              className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              placeholder="Summarize the revision or postponement"
-                              value={subMotionDraft.title}
-                              onChange={(e) =>
-                                handleSubMotionDraftChange(motionId, "title", e.target.value)
-                              }
-                            />
-                          </label>
-                          <label className="block text-sm font-semibold text-wine">
-                            Description
-                            <textarea
-                              className="mt-2 min-h-[90px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
-                              placeholder="Provide context or proposed changes (optional)"
-                              value={subMotionDraft.description}
-                              onChange={(e) =>
-                                handleSubMotionDraftChange(motionId, "description", e.target.value)
-                              }
-                            />
-                          </label>
-                          <button type="submit" className="btn-primary w-full justify-center">
-                            Add sub-motion
-                          </button>
-                        </form>
-                      )}
-                    </div>
+                      </>
+                    )}
                   </li>
                 );
               })}
@@ -1383,6 +1447,17 @@ export default function CommitteeDetail() {
       default:
         return "In favor";
     }
+  }
+
+  function motionPreviewText(motion) {
+    if (!motion) return "No description provided.";
+    const base =
+      motion.description ||
+      (motion.decisionRecord?.summary ? `Decision: ${motion.decisionRecord.summary}` : "") ||
+      displayType(motion.type);
+    if (!base) return "No description provided.";
+    const condensed = base.replace(/\s+/g, " ").trim();
+    return condensed.length > 180 ? `${condensed.slice(0, 177)}...` : condensed;
   }
 
   function renderVoteSummary(motion) {
