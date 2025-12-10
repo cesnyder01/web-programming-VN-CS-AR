@@ -1,7 +1,6 @@
 # RONR Platform (React SPA)
 
 Authors: VN, AR, CS  
-Live preview: https://rulesoforder.netlify.app/
 
 ## Getting Started
 
@@ -66,8 +65,19 @@ Legacy static HTML pages in the project root are retained for reference but are 
 ## Demo & Deployment Checklist
 
 - **Video walkthrough**: _TBD_ – record a short demo covering auth, chair controls, motions, voting, and overturn workflow. (Link placeholder: https://youtu.be/your-demo-url)
-- **Hosted site**: _TBD_ – Netlify build hook ready once backend is wired. (URL placeholder: https://rulesoforder.netlify.app)
-- **Screenshots**: capture landing, committees dashboard, chair control panel + speaker queue, decision archive, and motion detail cards for the README report.
+- **Hosted site**: https://rulesoforder.netlify.app
+- **Screenshots**: 
+
+***landing***
+![alt text](image.png)
+
+***committees dashboard***
+
+***chair control panel + speaker queue*** 
+
+***decision archive*** 
+
+***motion detail cards***
 
 ## Feature Walkthrough
 
@@ -85,41 +95,619 @@ Legacy static HTML pages in the project root are retained for reference but are 
 ## Documentation Assets
 
 - Landing + marketing copy in `src/pages/landing.jsx`.
+
+![alt text](image-1.png)
+
 - High-fidelity styled auth pages (`login.jsx`, `register.jsx`).
+
+![alt text](image-2.png) ![alt text](image-3.png)
+
 - Motion log demonstrates RONR adaptations for asynchronous use.
+
+
 
 Add screenshots of each page/workflow above when available to satisfy the report requirement.
 
-## Backend API Plan
+## Backend API Documentation
 
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| `/api/auth/register` | POST | Create user, hash password, issue JWT/session cookie. |
-| `/api/auth/login` | POST | Validate credentials, return auth token. |
-| `/api/committees` | GET/POST | List committees current user belongs to / create new committee with members + settings. |
-| `/api/committees/:id` | GET/PATCH | Fetch committee detail (motions, settings, hand raises) / update settings or membership changes. |
-| `/api/committees/:id/motions` | POST | Create motion, sub-motion, or special motion. |
-| `/api/motions/:motionId/discussion` | POST | Append discussion entry. |
-| `/api/motions/:motionId/votes` | POST | Cast or update a vote. |
-| `/api/motions/:motionId/decision` | POST | Record decision summary/outcome (owner/chair only). |
-| `/api/motions/:motionId/overturn` | POST | Submit overturn request (supporters only). |
-| `/api/committees/:id/hands` | POST/DELETE | Raise or lower a hand in the speaker queue. |
+### Overview
+The backend is built with Express.js and MongoDB. All endpoints require JWT authentication (except `/api/auth/register` and `/api/auth/login`). The API uses role-based access control (RBAC) with roles: `owner`, `chair`, `member`, and `observer`. Permissions include `createMotion`, `discussion`, `moveToVote`, and `vote`.
 
-Authentication: bearer token/JWT on every request. Committees filtered server-side so users only see permitted data.
+### Authentication Endpoints
 
-## Data Model Sketch
+#### `POST /api/auth/register`
+Register a new user.
 
-| Collection | Key Fields |
-| --- | --- |
-| `users` | `_id`, `name`, `email`, `passwordHash`, `profile` (optional metadata). |
-| `committees` | `_id`, `name`, `settings` (offline, minSpeakersBeforeVote, recordNamesInVotes, allowSpecialMotions), `members[]` (user ref, role, permissions). |
-| `motions` | `_id`, `committeeId`, `parentMotionId`, `variantOf` (`revision`, `amendment`, `postpone`, `overturn`), `type`, `title`, `description`, `status`, `createdBy`, timestamps. |
-| `discussionEntries` | `_id`, `motionId`, `stance`, `content`, `createdBy`, timestamps. |
-| `votes` | `_id`, `motionId`, `choice`, `createdBy`, timestamps. |
-| `decisions` | `_id`, `motionId`, `outcome`, `summary`, `pros`, `cons`, `recordedBy`, timestamps. |
-| `handRaises` | `_id`, `committeeId`, `stance`, `note`, `createdBy`, timestamps. |
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
 
-> Implementation detail: some collections could be embedded (motions with nested discussion/votes) for faster reads, but separating them makes pagination and audit logging easier once Mongo indexes are in place.
+**Response (201 Created):**
+```json
+{
+  "user": {
+    "id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+**Errors:**
+- `400`: Name, email, and password are required.
+- `409`: Email already registered.
+
+---
+
+#### `POST /api/auth/login`
+Authenticate a user and receive a JWT token.
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "user": {
+    "id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+**Errors:**
+- `400`: Email and password are required.
+- `401`: Invalid credentials.
+
+---
+
+#### `POST /api/auth/logout`
+Clear authentication session.
+
+**Response (200 OK):**
+```json
+{
+  "message": "Logged out."
+}
+```
+
+---
+
+#### `GET /api/auth/me`
+Get the current authenticated user's profile.
+
+**Response (200 OK):**
+```json
+{
+  "user": {
+    "id": "user_id",
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+---
+
+#### `PATCH /api/auth/me`
+Update the current user's profile.
+
+**Request Body:**
+```json
+{
+  "name": "Jane Doe"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "user": {
+    "id": "user_id",
+    "name": "Jane Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+**Errors:**
+- `400`: Name is required.
+
+---
+
+### Committee Endpoints
+
+#### `GET /api/committees`
+List all committees the current user is a member of.
+
+**Response (200 OK):**
+```json
+{
+  "committees": [
+    {
+      "_id": "committee_id",
+      "name": "Board of Directors",
+      "description": "Main board oversight",
+      "settings": {
+        "offlineMode": true,
+        "minSpeakersBeforeVote": 2,
+        "recordNamesInVotes": false,
+        "allowSpecialMotions": true
+      },
+      "members": [
+        {
+          "user": "user_id",
+          "name": "John Doe",
+          "email": "john@example.com",
+          "role": "owner",
+          "permissions": ["createMotion", "discussion", "moveToVote", "vote"]
+        }
+      ],
+      "handRaises": [],
+      "createdBy": "user_id",
+      "createdAt": "2025-12-10T00:00:00Z",
+      "updatedAt": "2025-12-10T00:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### `POST /api/committees`
+Create a new committee.
+
+**Request Body:**
+```json
+{
+  "name": "Board of Directors",
+  "description": "Main board oversight",
+  "members": [
+    {
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "role": "chair",
+      "permissions": ["createMotion", "discussion", "moveToVote", "vote"]
+    }
+  ],
+  "settings": {
+    "offlineMode": true,
+    "minSpeakersBeforeVote": 2,
+    "recordNamesInVotes": false,
+    "allowSpecialMotions": true
+  }
+}
+```
+
+**Response (201 Created):**
+Returns the created committee object (see GET response above).
+
+**Errors:**
+- `400`: Committee name is required.
+
+---
+
+#### `GET /api/committees/:id`
+Retrieve detailed information about a specific committee, including all motions.
+
+**Response (200 OK):**
+```json
+{
+  "committee": {
+    "_id": "committee_id",
+    "name": "Board of Directors",
+    "description": "Main board oversight",
+    "settings": { ... },
+    "members": [ ... ],
+    "handRaises": [ ... ],
+    "createdBy": "user_id",
+    "createdAt": "2025-12-10T00:00:00Z",
+    "updatedAt": "2025-12-10T00:00:00Z"
+  },
+  "motions": [ ... ]
+}
+```
+
+**Errors:**
+- `404`: Committee not found.
+
+---
+
+#### `PATCH /api/committees/:id/settings`
+Update committee settings (owner/chair only).
+
+**Request Body:**
+```json
+{
+  "offlineMode": false,
+  "minSpeakersBeforeVote": 3,
+  "recordNamesInVotes": true,
+  "allowSpecialMotions": false
+}
+```
+
+**Response (200 OK):**
+Returns the updated committee object.
+
+**Errors:**
+- `404`: Committee not found.
+- `403`: Only owners or chairs can edit settings.
+
+---
+
+#### `POST /api/committees/:id/hands`
+Raise a hand in the speaker queue (upsert).
+
+**Request Body:**
+```json
+{
+  "stance": "pro",
+  "note": "I support this proposal"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "handRaises": [
+    {
+      "_id": "hand_raise_id",
+      "user": "user_id",
+      "createdByName": "John Doe",
+      "createdByEmail": "john@example.com",
+      "stance": "pro",
+      "note": "I support this proposal",
+      "createdAt": "2025-12-10T00:00:00Z"
+    }
+  ]
+}
+```
+
+**Errors:**
+- `404`: Committee not found.
+
+---
+
+#### `DELETE /api/committees/:id/hands/:handId`
+Lower a hand (remove from speaker queue).
+
+**Response (200 OK):**
+```json
+{
+  "handRaises": [ ... ]
+}
+```
+
+**Errors:**
+- `404`: Committee not found.
+
+---
+
+### Motion Endpoints
+
+#### `GET /api/committees/:committeeId/motions`
+List all motions for a committee.
+
+**Response (200 OK):**
+```json
+{
+  "motions": [
+    {
+      "_id": "motion_id",
+      "committee": "committee_id",
+      "parentMotion": null,
+      "variantOf": null,
+      "type": "standard",
+      "title": "Approve budget proposal",
+      "description": "Annual budget for fiscal year 2026",
+      "status": "pending",
+      "createdBy": "user_id",
+      "createdByName": "John Doe",
+      "createdAt": "2025-12-10T00:00:00Z",
+      "discussion": [],
+      "votes": [],
+      "decisionRecord": null,
+      "updatedAt": "2025-12-10T00:00:00Z"
+    }
+  ]
+}
+```
+
+**Errors:**
+- `404`: Committee not found or access denied.
+
+---
+
+#### `POST /api/committees/:committeeId/motions`
+Create a new motion in a committee.
+
+**Request Body:**
+```json
+{
+  "title": "Approve budget proposal",
+  "description": "Annual budget for fiscal year 2026",
+  "type": "standard"
+}
+```
+
+**Response (201 Created):**
+Returns the created motion object (see GET response above).
+
+**Errors:**
+- `404`: Committee not found or access denied.
+- `403`: Permission denied (user must have `createMotion` permission).
+- `400`: Motion title is required or special motions are disabled.
+
+---
+
+#### `POST /api/committees/:committeeId/motions/:motionId/discussion`
+Add a discussion entry to a motion.
+
+**Request Body:**
+```json
+{
+  "stance": "pro",
+  "content": "I agree with this motion because..."
+}
+```
+
+**Response (200 OK):**
+Returns the updated motion with the new discussion entry.
+
+**Errors:**
+- `404`: Motion not found.
+- `403`: Permission denied (user must have `discussion` permission).
+- `400`: Discussion content is required.
+
+---
+
+#### `POST /api/committees/:committeeId/motions/:motionId/votes`
+Cast or update a vote on a motion.
+
+**Request Body:**
+```json
+{
+  "choice": "support"
+}
+```
+
+**Response (200 OK):**
+Returns the updated motion with the vote added/updated.
+
+**Vote choices:** `support`, `against`, `abstain`
+
+**Errors:**
+- `404`: Motion not found.
+- `403`: Permission denied (user must have `vote` permission).
+
+---
+
+#### `POST /api/committees/:committeeId/motions/:motionId/decision`
+Record a decision outcome for a motion (owner/chair only).
+
+**Request Body:**
+```json
+{
+  "outcome": "passed",
+  "summary": "Motion passed with broad support",
+  "pros": "Budget is balanced and accounts for growth",
+  "cons": "Some items lack detailed justification"
+}
+```
+
+**Response (200 OK):**
+Returns the updated motion with the decision record.
+
+**Outcome values:** `passed`, `failed`, `postponed`
+
+**Errors:**
+- `404`: Motion not found.
+- `403`: Permission denied (owner/chair only).
+- `400`: Outcome must be supplied and cannot be pending.
+
+---
+
+#### `POST /api/committees/:committeeId/motions/:motionId/submotions`
+Create a sub-motion (revision, amendment, or postponement).
+
+**Request Body:**
+```json
+{
+  "title": "Amendment to budget motion",
+  "description": "Add $5000 to marketing budget",
+  "variantOf": "amendment",
+  "committeeId": "committee_id"
+}
+```
+
+**Response (201 Created):**
+Returns the created sub-motion object.
+
+**Variant types:** `revision`, `amendment`, `postpone`
+
+**Errors:**
+- `404`: Committee or motion not found.
+- `403`: Permission denied.
+
+---
+
+#### `POST /api/committees/:committeeId/motions/:motionId/overturn`
+Submit an overturn request for a motion (only users who voted "support" can overturn).
+
+**Request Body:**
+```json
+{
+  "title": "Overturn budget approval",
+  "description": "Request to reconsider the budget decision"
+}
+```
+
+**Response (201 Created):**
+Returns the created overturn motion object.
+
+**Errors:**
+- `404`: Motion not found.
+- `403`: Permission denied (must have voted "support" on the original motion).
+
+---
+
+## Database Structure
+
+### Collections & Schemas
+
+#### `User` Collection
+Stores user account information and credentials.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Primary key, auto-generated by MongoDB |
+| `name` | String | Yes | User's display name, trimmed |
+| `email` | String | Yes | User's email address, unique and lowercase |
+| `passwordHash` | String | Yes | Bcrypt-hashed password (10 rounds) |
+| `createdAt` | Date | Auto | Timestamp when user was created |
+| `updatedAt` | Date | Auto | Timestamp of last update |
+
+**Indexes:** `email` (unique)
+
+---
+
+#### `Committee` Collection
+Stores committee information, settings, members, and speaker queue.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Primary key |
+| `name` | String | Yes | Committee name |
+| `description` | String | No | Committee description or purpose |
+| `settings` | Object | Yes | Committee configuration settings |
+| `settings.offlineMode` | Boolean | Yes | Enable offline mode (default: true) |
+| `settings.minSpeakersBeforeVote` | Number | Yes | Minimum speakers required before voting (default: 2) |
+| `settings.recordNamesInVotes` | Boolean | Yes | Whether to record voter names (default: false) |
+| `settings.allowSpecialMotions` | Boolean | Yes | Whether special motions are permitted (default: true) |
+| `members` | Array | Yes | Array of committee members (see Member sub-document) |
+| `handRaises` | Array | Yes | Speaker queue entries (see HandRaise sub-document) |
+| `createdBy` | ObjectId (ref: User) | Yes | User ID of committee creator |
+| `createdAt` | Date | Auto | Timestamp when committee was created |
+| `updatedAt` | Date | Auto | Timestamp of last update |
+
+**Member Sub-document:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `user` | ObjectId (ref: User) | No | Reference to User document (null if member hasn't registered) |
+| `name` | String | Yes | Member's display name |
+| `email` | String | No | Member's email address |
+| `role` | String (enum) | Yes | Member role: `owner`, `chair`, `member`, `observer` (default: `member`) |
+| `permissions` | Array | Yes | Array of permission strings: `createMotion`, `discussion`, `moveToVote`, `vote` |
+
+**HandRaise Sub-document:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Unique ID for this hand raise |
+| `user` | ObjectId (ref: User) | Yes | User who raised their hand |
+| `createdByName` | String | Yes | Name of the user (denormalized) |
+| `createdByEmail` | String | Yes | Email of the user (denormalized) |
+| `stance` | String (enum) | Yes | Position: `pro`, `con`, `neutral` (default: `neutral`) |
+| `note` | String | No | Optional notes or reasons for hand raise |
+| `createdAt` | Date | Yes | Timestamp when hand was raised |
+
+**Indexes:** `createdBy`, `members.user`, `members.email`, `members.name`
+
+---
+
+#### `Motion` Collection
+Stores motions, discussions, votes, and decisions for committee actions.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Primary key |
+| `committee` | ObjectId (ref: Committee) | Yes | Committee this motion belongs to |
+| `parentMotion` | ObjectId (ref: Motion) | No | Reference to parent motion (for sub-motions like amendments) |
+| `variantOf` | String (enum) | No | Sub-motion type: `revision`, `amendment`, `postpone`, `overturn`, or null |
+| `type` | String (enum) | Yes | Motion type: `standard`, `procedure`, `special` (default: `standard`) |
+| `title` | String | Yes | Motion title |
+| `description` | String | No | Detailed motion description |
+| `status` | String (enum) | Yes | Motion status: `pending`, `passed`, `failed`, `postponed` (default: `pending`) |
+| `createdBy` | ObjectId (ref: User) | Yes | User who created the motion |
+| `createdByName` | String | Yes | Creator's name (denormalized) |
+| `discussion` | Array | Yes | Discussion entries (see DiscussionEntry sub-document) |
+| `votes` | Array | Yes | Vote records (see Vote sub-document) |
+| `decisionRecord` | Object | No | Decision outcome (see Decision sub-document) |
+| `createdAt` | Date | Auto | Timestamp when motion was created |
+| `updatedAt` | Date | Auto | Timestamp of last update |
+
+**DiscussionEntry Sub-document:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Unique ID for this discussion entry |
+| `stance` | String (enum) | Yes | Position: `pro`, `con`, `neutral` (default: `neutral`) |
+| `content` | String | Yes | Discussion text |
+| `createdBy` | ObjectId (ref: User) | Yes | User who posted |
+| `createdByName` | String | Yes | Poster's name (denormalized) |
+| `createdAt` | Date | Yes | Timestamp when posted |
+
+**Vote Sub-document:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | Unique ID for this vote |
+| `choice` | String (enum) | Yes | Vote choice: `support`, `against`, `abstain` (default: `support`) |
+| `createdBy` | ObjectId (ref: User) | Yes | User who voted |
+| `createdByEmail` | String | Yes | Voter's email (denormalized) |
+| `createdByName` | String | Yes | Voter's name (denormalized) |
+| `createdAt` | Date | Yes | Timestamp when vote was cast |
+
+**Decision Sub-document:**
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `outcome` | String (enum) | Yes | Decision outcome: `passed`, `failed`, `postponed` |
+| `summary` | String | No | Summary of the decision |
+| `pros` | String | No | Pros/reasons for the decision |
+| `cons` | String | No | Cons/reasons against the decision |
+| `recordedAt` | Date | No | Timestamp when decision was recorded |
+| `recordedBy` | ObjectId (ref: User) | No | User who recorded the decision |
+| `recordedByName` | String | No | Decision recorder's name (denormalized) |
+
+**Indexes:** `committee`, `parentMotion`, `createdBy`
+
+---
+
+### Relationships Diagram
+
+```
+User (1) ──┬──> (Many) Committee.members[].user
+           ├──> (Many) Committee.createdBy
+           ├──> (Many) Motion.createdBy
+           ├──> (Many) Motion.discussion[].createdBy
+           ├──> (Many) Motion.votes[].createdBy
+           └──> (Many) Motion.decisionRecord.recordedBy
+
+Committee (1) ──┬──> (Many) Motion.committee
+                ├──> (Many) Committee.members[]
+                └──> (Many) Committee.handRaises[]
+
+Motion (1) ──┬──> (0..1) Motion.parentMotion (self-reference for sub-motions)
+             ├──> (Many) Motion.discussion[]
+             ├──> (Many) Motion.votes[]
+             └──> (0..1) Motion.decisionRecord
+```
+
+### Key Design Notes
+
+- **Denormalization:** User names and emails are stored in multiple places (motions, discussion entries, votes) for read performance and to handle deleted accounts gracefully.
+- **Embedded vs. Referenced:** Discussions, votes, and hand raises are embedded within their parent documents for faster retrieval. This simplifies queries at the cost of slightly larger document sizes.
+- **Sub-motions:** Amendments, revisions, postponements, and overturn requests are stored as separate Motion documents with a `parentMotion` reference and `variantOf` type indicator.
+- **Offline Mode:** The `settings.offlineMode` flag allows the frontend to continue working without backend connectivity; sync occurs when connection is restored.
+- **Access Control:** Permissions are stored at the member level within the committee, enabling granular role-based access for actions like creating motions, posting discussions, and voting.
 
 ## Final Project Deliverables Roadmap
 
