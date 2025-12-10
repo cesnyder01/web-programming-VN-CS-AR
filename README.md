@@ -68,16 +68,29 @@ Legacy static HTML pages in the project root are retained for reference but are 
 - **Hosted site**: https://rulesoforder.netlify.app
 - **Screenshots**: 
 
-***landing***
+***Landing***
+
 ![alt text](image.png)
 
-***committees dashboard***
+***Committees Dashboard***
 
-***chair control panel + speaker queue*** 
+![alt text](image-5.png)
 
-***decision archive*** 
+***Chair Control Panel***
 
-***motion detail cards***
+
+
+***Speaker Queue*** 
+
+![alt text](image-8.png)
+
+***Decision Archive*** 
+
+![alt text](image-6.png)
+
+***Motion Detail Cards***
+
+![alt text](image-7.png)
 
 ## Feature Walkthrough
 
@@ -104,7 +117,7 @@ Legacy static HTML pages in the project root are retained for reference but are 
 
 - Motion log demonstrates RONR adaptations for asynchronous use.
 
-
+![alt text](image-4.png)
 
 Add screenshots of each page/workflow above when available to satisfy the report requirement.
 
