@@ -1,6 +1,6 @@
 # RONR Platform (React SPA)
 
-Authors: VN, AR, CS  
+Authors: Vedha Navudu, Alice Roberts, Cora Snyder 
 
 ## Getting Started
 

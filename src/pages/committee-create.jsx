@@ -22,6 +22,7 @@ export default function CommitteeCreate() {
   const [committeeName, setCommitteeName] = useState("");
   const [members, setMembers] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [recordNamesInVotes, setRecordNamesInVotes] = useState(false);
 
   const ownerCount = useMemo(
     () => members.filter((m) => m.role === "owner").length,
@@ -151,12 +152,12 @@ export default function CommitteeCreate() {
       return;
     }
 
-    const settings = {
-      offlineMode: true,
-      minSpeakersBeforeVote: 2,
-      recordNamesInVotes: false,
-      allowSpecialMotions: true,
-    };
+  const settings = {
+    offlineMode: true,
+    minSpeakersBeforeVote: 2,
+    recordNamesInVotes,
+    allowSpecialMotions: true,
+  };
 
     const payload = {
       name,
@@ -241,6 +242,46 @@ export default function CommitteeCreate() {
               <MembersTable members={members} onEdit={startEdit} onRemove={removeMember} />
             </section>
           </div>
+
+          <section className="card border border-cream/70 bg-white/90 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-wine">Meeting preferences</h2>
+              <span className="rounded-full bg-rose/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
+                Host only
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-text/65">
+              Choose vote privacy before the meeting starts. You can switch to named votes to show who cast each ballot.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="flex cursor-pointer gap-3 rounded-2xl border border-cream/70 bg-white/80 p-4 text-sm text-text/80 shadow-inner">
+                <input
+                  type="radio"
+                  name="vote-privacy"
+                  className="mt-[2px] h-4 w-4 text-wine focus:ring-rose/40"
+                  checked={!recordNamesInVotes}
+                  onChange={() => setRecordNamesInVotes(false)}
+                />
+                <div>
+                  <p className="font-semibold text-wine">Anonymous voting</p>
+                  <p className="text-xs text-text/60">Tallies only; voter names stay hidden for everyone.</p>
+                </div>
+              </label>
+              <label className="flex cursor-pointer gap-3 rounded-2xl border border-cream/70 bg-white/80 p-4 text-sm text-text/80 shadow-inner">
+                <input
+                  type="radio"
+                  name="vote-privacy"
+                  className="mt-[2px] h-4 w-4 text-wine focus:ring-rose/40"
+                  checked={recordNamesInVotes}
+                  onChange={() => setRecordNamesInVotes(true)}
+                />
+                <div>
+                  <p className="font-semibold text-wine">Show voter names</p>
+                  <p className="text-xs text-text/60">Vote records include member names and are visible to the committee.</p>
+                </div>
+              </label>
+            </div>
+          </section>
 
           <div className="flex justify-end">
             <button type="submit" className="btn-primary px-10">

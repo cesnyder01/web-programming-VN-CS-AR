@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../utils/api.js";
 
 export default function CommitteesList() {
-  const { appData, logout, loading } = useAuth();
+  const { appData, logout, loading, refreshCommittees } = useAuth();
   const committees = appData.committees || [];
   const currentUser = appData.auth?.currentUser;
 
@@ -27,7 +27,7 @@ export default function CommitteesList() {
     if (!confirmed) return;
     try {
       await api.deleteCommittee(committee._id || committee.id);
-      window.location.reload();
+      await refreshCommittees();
     } catch (err) {
       alert(err.message || "Unable to delete committee.");
     }
