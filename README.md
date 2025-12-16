@@ -64,7 +64,7 @@ Legacy static HTML pages in the project root are retained for reference but are 
 
 ## Demo & Deployment Checklist
 
-- **Video walkthrough**: _TBD_ – record a short demo covering auth, chair controls, motions, voting, and overturn workflow. (Link placeholder: https://youtu.be/your-demo-url)
+- **Video walkthrough**: _TBD_ – record a short demo covering auth, chair controls, motions, voting, and overturn workflow. (Link placeholder: https://drive.google.com/file/d/1USS_KdqoIDVBIS3NNfDZEo0sqJdbqItN/view?usp=sharing)
 - **Hosted site**: https://rulesoforder.netlify.app
 - **Screenshots**: 
 

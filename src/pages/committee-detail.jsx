@@ -650,6 +650,7 @@ export default function CommitteeDetail() {
                   <input
                     type="number"
                     min="0"
+                    id="minNumSpeakers"
                     className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                     value={settingsForm.minSpeakersBeforeVote}
                     disabled={!canEditSettings}
