@@ -610,7 +610,7 @@ export default function CommitteeDetail() {
                     Toggle offline options, speaker thresholds, and vote recording preferences.
                   </p>
                 </div>
-                <span className="rounded-full bg-rose/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose" style = "margin-right: 40px">
+                <span className="mr-10 rounded-full bg-rose/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose">
                   {canEditSettings ? "Editable" : "View only"}
                 </span>
               </div>
