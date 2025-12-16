@@ -45,7 +45,7 @@ export default function Profile() {
             to="/committees"
             className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-wine shadow-soft transition hover:-translate-y-0.5"
           >
-            �+? Back to committees
+            Back to committees
           </Link>
           <div className="flex items-center gap-2">
             <button onClick={logout} type="button" className="btn-secondary">

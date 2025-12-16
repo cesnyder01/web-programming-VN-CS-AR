@@ -78,7 +78,9 @@ Legacy static HTML pages in the project root are retained for reference but are 
 
 ***Chair Control Panel***
 
+![alt text](image-10.png)
 
+![alt text](image-9.png)
 
 ***Speaker Queue*** 
 
