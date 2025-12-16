@@ -358,43 +358,16 @@ export async function handler(event) {
     const authResp = requireAuth(user, corsHeaders);
     if (authResp) return authResp;
     const committeeId = committeeSettingsMatch[1];
-    const committee = await Committee.findOne({ _id: committeeId, ...membershipFilter(user) });
-    if (!committee) {
+    const { settings = {} } = body;
+    const updated = await Committee.findOneAndUpdate(
+      { _id: committeeId, ...membershipFilter(user) },
+      { $set: { settings: { ...settings } } },
+      { new: true }
+    ).lean();
+    if (!updated) {
       return json(404, { message: "Committee not found." }, corsHeaders);
     }
-    const normalizedEmail = user.email?.toLowerCase?.();
-    const isChair = (committee.members || []).some((m) => {
-      if (!m || m.role !== "chair") return false;
-      if (m.user && String(m.user) === String(user._id)) return true;
-      if (m.userId && String(m.userId) === String(user._id)) return true;
-      if (normalizedEmail && m.email && m.email.toLowerCase() === normalizedEmail) return true;
-      return false;
-    });
-    if (!isOwner(committee, user) && !isChair) {
-      return json(403, { message: "Only owners or chairs can edit settings." }, corsHeaders);
-    }
-    const incoming = body?.settings || body || {};
-    const merged = {
-      offlineMode:
-        incoming.offlineMode !== undefined ? incoming.offlineMode : committee.settings?.offlineMode ?? true,
-      recordNamesInVotes:
-        incoming.recordNamesInVotes !== undefined
-          ? incoming.recordNamesInVotes
-          : committee.settings?.recordNamesInVotes ?? false,
-      allowSpecialMotions:
-        incoming.allowSpecialMotions !== undefined
-          ? incoming.allowSpecialMotions
-          : committee.settings?.allowSpecialMotions ?? true,
-      minSpeakersBeforeVote: Math.max(
-        0,
-        Number.isFinite(Number(incoming.minSpeakersBeforeVote))
-          ? Number(incoming.minSpeakersBeforeVote)
-          : committee.settings?.minSpeakersBeforeVote ?? 0
-      ),
-    };
-    committee.settings = merged;
-    await committee.save();
-    return json(200, { committee }, corsHeaders);
+    return json(200, { committee: updated }, corsHeaders);
   }
 
   // Committee delete (owner only)

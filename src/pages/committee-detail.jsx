@@ -135,12 +135,6 @@ export default function CommitteeDetail() {
     setExpandedMotions({});
   }, [id]);
 
-  useEffect(() => {
-    if (!committeeSettings.allowSpecialMotions && form.type === "special") {
-      setForm((prev) => ({ ...prev, type: "standard" }));
-    }
-  }, [committeeSettings.allowSpecialMotions, form.type]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream via-peach to-sand p-6 text-center">
@@ -189,9 +183,6 @@ export default function CommitteeDetail() {
 
   const canEditSettings = ["owner", "chair"].includes(memberRecord?.role);
   const canModerateHands = canEditSettings;
-  const allowAsyncParticipation = Boolean(committeeSettings.offlineMode);
-  const asyncLockedForMember = !allowAsyncParticipation && !canEditSettings;
-  const minSpeakersBeforeVote = Math.max(0, Number(committeeSettings.minSpeakersBeforeVote) || 0);
   const userHandRaise = (handRaises || []).find((entry) => isEntryByCurrentUser(entry));
 
   function handleSettingsChange(field, value) {
@@ -226,10 +217,6 @@ export default function CommitteeDetail() {
 
   async function raiseHand(event) {
     event.preventDefault();
-    if (asyncLockedForMember) {
-      alert("Asynchronous participation is disabled by the chair right now.");
-      return;
-    }
     if (!canPerform("discussion")) {
       alert("You need discussion permissions to join the speaker queue.");
       return;
@@ -276,10 +263,6 @@ export default function CommitteeDetail() {
   async function createMotion(e) {
     e.preventDefault();
     setStatus("");
-    if (asyncLockedForMember) {
-      setError("Offline mode is disabled. Ask the chair to allow asynchronous participation before adding motions.");
-      return;
-    }
     const title = form.title.trim();
     const description = form.description.trim();
     if (!title) {
@@ -328,11 +311,6 @@ export default function CommitteeDetail() {
       return;
     }
 
-    if (asyncLockedForMember) {
-      alert("Offline mode is disabled. Asynchronous discussion is locked until the chair re-enables it.");
-      return;
-    }
-
     if (!canPerform("discussion")) {
       alert("You do not have permission to participate in discussion.");
       return;
@@ -359,19 +337,8 @@ export default function CommitteeDetail() {
 
   async function submitVote(event, motionId, previousChoice) {
     event.preventDefault();
-    const motion = motionsById[String(motionId)] || null;
-    if (asyncLockedForMember) {
-      alert("Offline mode is disabled. Voting is locked until the chair re-enables participation.");
-      return;
-    }
     if (!canPerform("vote")) {
       alert("You do not have permission to vote in this committee.");
-      return;
-    }
-    if (shouldBlockVoting(motion)) {
-      alert(
-        `Voting opens after at least ${minSpeakersBeforeVote} speaker(s) have participated in discussion.`
-      );
       return;
     }
     const selection =
@@ -471,10 +438,6 @@ export default function CommitteeDetail() {
 
   async function submitSubMotion(event, parentMotion) {
     event.preventDefault();
-    if (asyncLockedForMember) {
-      alert("Offline mode is disabled. Asynchronous sub-motions are locked until the chair re-enables participation.");
-      return;
-    }
     if (!canPerform("createMotion")) {
       alert("You do not have permission to raise sub-motions.");
       return;
@@ -528,10 +491,6 @@ export default function CommitteeDetail() {
     event.preventDefault();
     if (!canRequestOverturn(motion)) {
       alert("Only supporters of a passed motion can request an overturn.");
-      return;
-    }
-    if (asyncLockedForMember) {
-      alert("Offline mode is disabled. Overturn requests are paused until the chair re-enables participation.");
       return;
     }
     const motionKey = motion.id || motion._id;
@@ -718,11 +677,6 @@ export default function CommitteeDetail() {
               <p className="text-sm text-text/65">
                 Members can raise their hands with a stance. Chairs can mark speakers as finished.
               </p>
-              {asyncLockedForMember && (
-                <p className="mt-2 text-xs text-rose">
-                  Offline mode is off. Asynchronous participation is read-only until the chair re-enables it.
-                </p>
-              )}
             </div>
             <div className="flex items-center gap-2 text-xs text-text/60">
               <span className="inline-flex h-2 w-2 rounded-full bg-rose" />
@@ -791,7 +745,6 @@ export default function CommitteeDetail() {
                 <select
                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                   value={handRaiseDraft.stance}
-                  disabled={asyncLockedForMember}
                   onChange={(e) => handleHandRaiseChange("stance", e.target.value)}
                 >
                   <option value="pro">Pro</option>
@@ -805,15 +758,10 @@ export default function CommitteeDetail() {
                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                   placeholder="Topic or amendment"
                   value={handRaiseDraft.note}
-                  disabled={asyncLockedForMember}
                   onChange={(e) => handleHandRaiseChange("note", e.target.value)}
                 />
               </label>
-              <button
-                type="submit"
-                className="btn-primary mt-auto w-full justify-center md:w-auto"
-                disabled={asyncLockedForMember}
-              >
+              <button type="submit" className="btn-primary mt-auto w-full justify-center md:w-auto">
                 Raise hand
               </button>
             </form>
@@ -862,11 +810,6 @@ export default function CommitteeDetail() {
                   {status}
                 </p>
               )}
-              {asyncLockedForMember && (
-                <p className="mt-3 rounded-2xl border border-rose/40 bg-rose/15 px-4 py-3 text-xs text-wine">
-                  Offline mode is off. Ask the chair to re-enable asynchronous participation before submitting new motions.
-                </p>
-              )}
             </div>
             <form className="space-y-6" onSubmit={createMotion}>
               <label className="block text-sm font-semibold text-wine" htmlFor="motionTitle">
@@ -874,7 +817,6 @@ export default function CommitteeDetail() {
                 <input
                   id="motionTitle"
                   value={form.title}
-                  disabled={asyncLockedForMember}
                   onChange={(e) => handleFormChange("title", e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                   placeholder="Summarize the motion"
@@ -887,7 +829,6 @@ export default function CommitteeDetail() {
                 <textarea
                   id="motionDescription"
                   value={form.description}
-                  disabled={asyncLockedForMember}
                   onChange={(e) => handleFormChange("description", e.target.value)}
                   className="mt-2 min-h-[140px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                   placeholder="Provide details, amendments, or supporting context (optional)"
@@ -899,30 +840,16 @@ export default function CommitteeDetail() {
                 <select
                   id="motionType"
                   value={form.type}
-                  disabled={asyncLockedForMember}
                   onChange={(e) => handleFormChange("type", e.target.value)}
                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-base text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                 >
                   <option value="standard">Standard motion (majority)</option>
                   <option value="procedure">Procedure change (2/3 vote)</option>
-                  <option value="special" disabled={!committeeSettings.allowSpecialMotions}>
-                    Special motion
-                  </option>
+                  <option value="special">Special motion</option>
                 </select>
               </label>
 
-              {!committeeSettings.allowSpecialMotions && (
-                <p className="text-xs text-text/60">
-                  Special motions are disabled in chair settings. Enable them in the chair panel to use
-                  this option.
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="btn-primary w-full justify-center"
-                disabled={asyncLockedForMember}
-              >
+              <button type="submit" className="btn-primary w-full justify-center">
                 Submit motion
               </button>
             </form>
@@ -981,9 +908,7 @@ export default function CommitteeDetail() {
                 );
                 const isExpanded = Boolean(expandedMotions[motionId]);
                 const discussionCount = (motion.discussion || []).length;
-                const speakerCount = countSpeakersForMotion(motion);
                 const voteCount = (motion.votes || []).length;
-                const votingBlocked = shouldBlockVoting(motion);
                 return (
                   <li
                     key={motionId}
@@ -1085,7 +1010,6 @@ export default function CommitteeDetail() {
                                   <select
                                     className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                     value={discussionDraft.stance}
-                                    disabled={asyncLockedForMember}
                                     onChange={(e) =>
                                       handleDiscussionDraftChange(motionId, "stance", e.target.value)
                                     }
@@ -1105,17 +1029,12 @@ export default function CommitteeDetail() {
                                     className="mt-2 min-h-[110px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                     placeholder="Share a perspective with context or references."
                                     value={discussionDraft.message}
-                                    disabled={asyncLockedForMember}
                                     onChange={(e) =>
                                       handleDiscussionDraftChange(motionId, "message", e.target.value)
                                     }
                                   />
                                 </label>
-                                <button
-                                  type="submit"
-                                  className="btn-secondary w-full justify-center"
-                                  disabled={asyncLockedForMember}
-                                >
+                                <button type="submit" className="btn-secondary w-full justify-center">
                                   Add reply
                                 </button>
                               </form>
@@ -1128,13 +1047,6 @@ export default function CommitteeDetail() {
                             <p className="text-sm font-semibold text-wine">Voting</p>
                             <span className="text-xs text-text/60">{voteCount} total</span>
                           </div>
-                          {!canEditSettings && minSpeakersBeforeVote > 0 && motion.type !== "special" && (
-                            <p className="mt-2 text-xs text-text/60">
-                              Voting opens after at least {minSpeakersBeforeVote} speaker
-                              {minSpeakersBeforeVote === 1 ? "" : "s"} share discussion. Currently{" "}
-                              {speakerCount}.
-                            </p>
-                          )}
                           {renderVoteSummary(motion)}
                           <form
                             className="mt-4 space-y-3"
@@ -1145,7 +1057,6 @@ export default function CommitteeDetail() {
                               <select
                                 className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                 value={currentChoice}
-                                disabled={asyncLockedForMember || votingBlocked}
                                 onChange={(e) => handleVoteDraftChange(motionId, e.target.value)}
                               >
                                 <option value="support">In favor</option>
@@ -1153,11 +1064,7 @@ export default function CommitteeDetail() {
                                 <option value="abstain">Abstain</option>
                               </select>
                             </label>
-                            <button
-                              type="submit"
-                              className="btn-primary w-full justify-center"
-                              disabled={asyncLockedForMember || votingBlocked}
-                            >
+                            <button type="submit" className="btn-primary w-full justify-center">
                               {existingVote ? "Update vote" : "Submit vote"}
                             </button>
                             {existingVote && (
@@ -1287,7 +1194,6 @@ export default function CommitteeDetail() {
                                       className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                       placeholder={`Overturn: ${motion.title}`}
                                       value={overturnDraft.title}
-                                      disabled={asyncLockedForMember}
                                       onChange={(e) =>
                                         handleOverturnDraftChange(motionId, "title", e.target.value)
                                       }
@@ -1299,17 +1205,12 @@ export default function CommitteeDetail() {
                                       className="mt-2 min-h-[80px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                       placeholder="Explain why the decision should be reconsidered."
                                       value={overturnDraft.justification}
-                                      disabled={asyncLockedForMember}
                                       onChange={(e) =>
                                         handleOverturnDraftChange(motionId, "justification", e.target.value)
                                       }
                                     />
                                   </label>
-                                  <button
-                                    type="submit"
-                                    className="btn-primary w-full justify-center"
-                                    disabled={asyncLockedForMember}
-                                  >
+                                  <button type="submit" className="btn-primary w-full justify-center">
                                     Submit overturn request
                                   </button>
                                 </form>
@@ -1372,7 +1273,6 @@ export default function CommitteeDetail() {
                                 <select
                                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-3 py-2 text-sm text-text focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                   value={subMotionDraft.variant}
-                                  disabled={asyncLockedForMember}
                                   onChange={(e) =>
                                     handleSubMotionDraftChange(motionId, "variant", e.target.value)
                                   }
@@ -1388,7 +1288,6 @@ export default function CommitteeDetail() {
                                   className="mt-2 w-full rounded-2xl border border-cream/70 bg-white/80 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                   placeholder="Summarize the revision or postponement"
                                   value={subMotionDraft.title}
-                                  disabled={asyncLockedForMember}
                                   onChange={(e) =>
                                     handleSubMotionDraftChange(motionId, "title", e.target.value)
                                   }
@@ -1400,17 +1299,12 @@ export default function CommitteeDetail() {
                                   className="mt-2 min-h-[90px] w-full rounded-2xl border border-cream/70 bg-white/70 px-4 py-3 text-sm text-text placeholder:text-text/40 shadow-inner focus:border-wine focus:outline-none focus:ring-2 focus:ring-rose/40"
                                   placeholder="Provide context or proposed changes (optional)"
                                   value={subMotionDraft.description}
-                                  disabled={asyncLockedForMember}
                                   onChange={(e) =>
                                     handleSubMotionDraftChange(motionId, "description", e.target.value)
                                   }
                                 />
                               </label>
-                              <button
-                                type="submit"
-                                className="btn-primary w-full justify-center"
-                                disabled={asyncLockedForMember}
-                              >
+                              <button type="submit" className="btn-primary w-full justify-center">
                                 Add sub-motion
                               </button>
                             </form>
@@ -1566,32 +1460,10 @@ export default function CommitteeDetail() {
     return condensed.length > 180 ? `${condensed.slice(0, 177)}...` : condensed;
   }
 
-  function countSpeakersForMotion(motion) {
-    if (!motion) return 0;
-    const speakers = new Set();
-    (motion.discussion || []).forEach((entry, index) => {
-      const identifier =
-        entry.createdBy ??
-        entry.createdByEmail?.toLowerCase?.() ??
-        entry.createdByName?.toLowerCase?.() ??
-        `anon-${index}`;
-      speakers.add(String(identifier));
-    });
-    return speakers.size;
-  }
-
-  function shouldBlockVoting(motion) {
-    if (!motion) return false;
-    if (canEditSettings) return false;
-    if (motion.type === "special") return false;
-    if (minSpeakersBeforeVote <= 0) return false;
-    return countSpeakersForMotion(motion) < minSpeakersBeforeVote;
-  }
-
   function renderVoteSummary(motion) {
     const votes = motion.votes || [];
     const tallies = computeVoteTallies(votes);
-    const listNames = Boolean(committeeSettings.recordNamesInVotes);
+    const listNames = Boolean(committee?.settings?.recordNamesInVotes);
     return (
       <>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
